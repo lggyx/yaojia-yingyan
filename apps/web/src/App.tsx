@@ -1,24 +1,32 @@
 import { useEffect, useState } from "react";
+import { Dashboard } from "./components/Dashboard";
 import { api } from "./lib/api";
-
-interface Stats {
-  monitoredCount: number;
-  anomalyCount: number;
-  byRisk: { high: number; mid: number; low: number };
-  closedRate: number;
-  dismissedCount: number;
-}
+import type { Anomaly, PageResult, PriceDetail, PriceRecord, StatsOverview } from "./types";
 
 export default function App() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<StatsOverview | null>(null);
+  const [records, setRecords] = useState<PriceRecord[]>([]);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [selectedDetail, setSelectedDetail] = useState<PriceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     api.detect()
-      .then(() => api.getStats())
-      .then(data => {
-        if (active) setStats(data as Stats);
+      .then(() => Promise.all([
+        api.getStats() as Promise<StatsOverview>,
+        api.getPrices("?pageSize=12") as Promise<PageResult<PriceRecord>>,
+        api.getAnomalies() as Promise<PageResult<Anomaly>>,
+      ]))
+      .then(async ([nextStats, pricePage, anomalyPage]) => {
+        if (!active) return;
+        setStats(nextStats);
+        setRecords(pricePage.items);
+        setAnomalies(anomalyPage.items);
+        if (pricePage.items[0]) {
+          const detail = await api.getPrice(pricePage.items[0].id) as PriceDetail;
+          if (active) setSelectedDetail(detail);
+        }
       })
       .catch((err: Error) => {
         if (active) setError(err.message);
@@ -28,42 +36,44 @@ export default function App() {
     };
   }, []);
 
-  return (
-    <main className="min-h-[100dvh] px-6 py-6 text-sentinel-ink md:px-10">
-      <section className="mx-auto grid max-w-7xl gap-5 rounded-lg border border-sentinel-line bg-sentinel-panel p-5 shadow-[0_24px_70px_rgba(11,23,20,0.14)] md:grid-cols-[1.2fr_0.8fr] md:p-7">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-sentinel-risk">Price Sentinel</p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">药价鹰眼</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#40564d] md:text-base">
-            面向医保价格治理的异常预警与闭环处置智能体，当前前端链路已接入检测和统计接口。
-          </p>
-        </div>
-        <div className="grid content-end gap-3 rounded-md border border-sentinel-line bg-[#fbfcfb] p-4">
-          {error ? (
-            <div className="border-l-4 border-sentinel-risk bg-[#fff4f2] p-3 text-sm text-sentinel-risk">{error}</div>
-          ) : stats ? (
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Metric label="监测记录" value={stats.monitoredCount} />
-              <Metric label="异常候选" value={stats.anomalyCount} tone="risk" />
-              <Metric label="高风险" value={stats.byRisk.high} tone="risk" />
-              <Metric label="闭环率" value={`${Math.round(stats.closedRate * 100)}%`} />
-            </div>
-          ) : (
-            <div className="h-28 animate-pulse rounded-md bg-[#e2ebe5]" aria-label="加载统计" />
-          )}
-        </div>
-      </section>
-    </main>
-  );
-}
+  const selectRecord = (id: string) => {
+    api.getPrice(id)
+      .then(detail => setSelectedDetail(detail as PriceDetail))
+      .catch((err: Error) => setError(err.message));
+  };
 
-function Metric({ label, value, tone }: { label: string; value: number | string; tone?: "risk" }) {
+  if (error) {
+    return (
+      <main className="grid min-h-[100dvh] place-items-center px-4 text-sentinel-ink">
+        <div className="w-full max-w-xl rounded-md border border-sentinel-risk bg-[#fff4f2] p-5 text-sentinel-risk shadow-sm">
+          <div className="font-mono text-xs uppercase tracking-[0.18em]">API Error</div>
+          <p className="mt-3 text-sm leading-6">{error}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <main className="min-h-[100dvh] px-4 py-4 text-sentinel-ink md:px-8 md:py-6">
+        <div className="mx-auto grid max-w-7xl gap-4">
+          <div className="h-32 animate-pulse rounded-lg border border-sentinel-line bg-sentinel-panel" />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-28 animate-pulse rounded-md bg-white" />)}
+          </div>
+          <div className="h-[420px] animate-pulse rounded-md bg-white" />
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <div className="rounded-md border border-sentinel-line bg-white p-3">
-      <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#5c6f67]">{label}</div>
-      <div className={tone === "risk" ? "mt-2 text-2xl font-semibold text-sentinel-risk" : "mt-2 text-2xl font-semibold"}>
-        {value}
-      </div>
-    </div>
+    <Dashboard
+      stats={stats}
+      records={records}
+      anomalies={anomalies}
+      selectedDetail={selectedDetail}
+      onSelectRecord={selectRecord}
+    />
   );
 }
