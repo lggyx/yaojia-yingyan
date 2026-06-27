@@ -21,11 +21,13 @@ export function getLlmStatus(): LlmStatus {
 export async function chat(system: string, user: string): Promise<string> {
   const base = process.env.LLM_BASE_URL;
   if (process.env.MOCK_LLM === "1" || !base) return mockReply(system, user);
+  const timeoutMs = Number(process.env.LLM_TIMEOUT_MS ?? 8000);
   try {
     const res = await fetch(`${base}/v1/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json",
         ...(process.env.LLM_API_KEY ? { Authorization: `Bearer ${process.env.LLM_API_KEY}` } : {}) },
+      signal: AbortSignal.timeout(timeoutMs),
       body: JSON.stringify({ model: getLlmStatus().model,
         temperature: 0.2, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
     });
