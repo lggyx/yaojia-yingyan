@@ -1,0 +1,31 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "yaojia-yingyan",
+    },
+    "apps/api": {
+      "name": "@app/api",
+      "dependencies": {
+        "hono": "^4",
+      },
+    },
+    "apps/web": {
+      "name": "@app/web",
+    },
+    "packages/shared": {
+      "name": "@shared",
+      "version": "0.0.0",
+    },
+  },
+  "packages": {
+    "@app/api": ["@app/api@workspace:apps/api"],
+
+    "@app/web": ["@app/web@workspace:apps/web"],
+
+    "@shared": ["@shared@workspace:packages/shared"],
+
+    "hono": ["hono@4.12.27", "https://registry.npmmirror.com/hono/-/hono-4.12.27.tgz", {}, "sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q=="],
+  }
+}
