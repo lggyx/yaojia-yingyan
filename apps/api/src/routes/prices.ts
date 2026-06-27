@@ -34,7 +34,7 @@ r.get("/stats/overview", (c) => {
   const monitoredCount = (db.query("SELECT COUNT(*) c FROM price_records").get() as any).c;
   const aRows: any[] = db.query("SELECT risk_level lvl, status FROM anomalies").all();
   const byRisk = { high: 0, mid: 0, low: 0 };
-  for (const a of aRows) byRisk[a.lvl as "high"|"mid"|"low"]++;
+  for (const a of aRows) if (a.lvl in byRisk) byRisk[a.lvl as "high"|"mid"|"low"]++;
   const closed = aRows.filter(a => a.status === "closed").length;
   const dismissed = aRows.filter(a => a.status === "dismissed").length;
   return c.json(ok({ monitoredCount, anomalyCount: aRows.length, byRisk,
