@@ -110,8 +110,12 @@ export default function App() {
 
   const refreshBoard = () => api.getBoard().then(nextBoard => setBoard(nextBoard as BoardResult));
 
+  const workOrders = board && Array.isArray(board.columns) ? board.columns.flatMap(column => column.cards) : [];
+
   const createWorkOrderFromReport = () => {
     if (!selectedAnomaly || !aiReport) return;
+    const existingWorkOrder = workOrders.find(item => item.anomalyId === selectedAnomaly.id);
+    if (existingWorkOrder) return;
     setCreatingWorkOrder(true);
     api.createWorkOrder({
       anomalyId: selectedAnomaly.id,
@@ -120,7 +124,10 @@ export default function App() {
       note: `AI研判：${aiReport.conclusion.summary}`,
     })
       .then(refreshBoard)
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => {
+        if (err.message.includes("already exists")) return refreshBoard();
+        setError(err.message);
+      })
       .finally(() => setCreatingWorkOrder(false));
   };
 
@@ -169,6 +176,10 @@ export default function App() {
     );
   }
 
+  const selectedWorkOrderExists = Boolean(
+    selectedAnomaly && workOrders.some(item => item.anomalyId === selectedAnomaly.id),
+  );
+
   return (
     <>
       <Dashboard
@@ -192,6 +203,7 @@ export default function App() {
         challenging={challenging}
         reporting={reporting}
         creatingWorkOrder={creatingWorkOrder}
+        workOrderExists={selectedWorkOrderExists}
         investigateResult={investigateResult}
         challengeResult={challengeResult}
         aiReport={aiReport}
