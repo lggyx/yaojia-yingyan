@@ -13,6 +13,7 @@ const SEL = `SELECT id,mi_code miCode,generic,brand,manufacturer,spec,form,categ
   listing_price listingPrice,hospital,region,date FROM price_records`;
 
 function setupApp() {
+  process.env.MOCK_LLM = "1";
   process.env.DB_PATH = `data/agent-routes-${crypto.randomUUID()}.test.sqlite`;
   rmSync(process.env.DB_PATH, { force: true });
   const db = getDb();
