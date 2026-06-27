@@ -31,6 +31,45 @@ function setupApp() {
 }
 
 describe("agent routes", () => {
+  test("agent status reports remote llm configuration without exposing secrets", async () => {
+    const previous = {
+      base: process.env.LLM_BASE_URL,
+      key: process.env.LLM_API_KEY,
+      model: process.env.LLM_MODEL,
+      mock: process.env.MOCK_LLM,
+    };
+    process.env.LLM_BASE_URL = "https://llm.example.com";
+    process.env.LLM_API_KEY = "sk-test-secret";
+    process.env.LLM_MODEL = "gpt-5.5";
+    delete process.env.MOCK_LLM;
+
+    try {
+      const app = new Hono();
+      app.route("/api", agent);
+      const response = await app.request("/api/agent/status");
+
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(json).toEqual({
+        code: 0,
+        data: {
+          mode: "remote",
+          model: "gpt-5.5",
+          provider: "openai-compatible",
+          baseConfigured: true,
+          keyConfigured: true,
+        },
+        msg: "ok",
+      });
+      expect(JSON.stringify(json)).not.toContain("sk-test-secret");
+    } finally {
+      previous.base === undefined ? delete process.env.LLM_BASE_URL : process.env.LLM_BASE_URL = previous.base;
+      previous.key === undefined ? delete process.env.LLM_API_KEY : process.env.LLM_API_KEY = previous.key;
+      previous.model === undefined ? delete process.env.LLM_MODEL : process.env.LLM_MODEL = previous.model;
+      previous.mock === undefined ? delete process.env.MOCK_LLM : process.env.MOCK_LLM = previous.mock;
+    }
+  });
+
   test("repeated investigate and challenge calls record traces without 500", async () => {
     const { app, db } = setupApp();
 

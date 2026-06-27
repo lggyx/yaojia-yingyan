@@ -1,3 +1,23 @@
+export interface LlmStatus {
+  mode: "mock" | "remote";
+  model: string;
+  provider: "openai-compatible";
+  baseConfigured: boolean;
+  keyConfigured: boolean;
+}
+
+export function getLlmStatus(): LlmStatus {
+  const baseConfigured = Boolean(process.env.LLM_BASE_URL);
+  const keyConfigured = Boolean(process.env.LLM_API_KEY);
+  return {
+    mode: process.env.MOCK_LLM === "1" || !baseConfigured ? "mock" : "remote",
+    model: process.env.LLM_MODEL ?? "gpt-5.5",
+    provider: "openai-compatible",
+    baseConfigured,
+    keyConfigured,
+  };
+}
+
 export async function chat(system: string, user: string): Promise<string> {
   const base = process.env.LLM_BASE_URL;
   if (process.env.MOCK_LLM === "1" || !base) return mockReply(system, user);
@@ -6,7 +26,7 @@ export async function chat(system: string, user: string): Promise<string> {
       method: "POST",
       headers: { "Content-Type": "application/json",
         ...(process.env.LLM_API_KEY ? { Authorization: `Bearer ${process.env.LLM_API_KEY}` } : {}) },
-      body: JSON.stringify({ model: process.env.LLM_MODEL ?? "deepseek-chat",
+      body: JSON.stringify({ model: getLlmStatus().model,
         temperature: 0.2, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
     });
     const json: any = await res.json();

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getDb } from "../db/client";
 import { investigate } from "../agent/orchestrator";
 import { challenge } from "../agent/challenge";
+import { getLlmStatus } from "../agent/llm";
 import { standardize } from "../standardize/standardize";
 import type { Anomaly, PriceRecord } from "@shared/types";
 
@@ -22,6 +23,8 @@ function saveTrace(db: any, anomalyId: string, kind: string, payload: unknown) {
   db.prepare("INSERT INTO agent_traces (id,anomaly_id,kind,payload,created_at) VALUES (?,?,?,?,?)")
     .run(`T-${kind}-${anomalyId}-${crypto.randomUUID()}`, anomalyId, kind, JSON.stringify(payload), new Date().toISOString());
 }
+
+r.get("/agent/status", (c) => c.json(ok(getLlmStatus())));
 
 r.post("/agent/investigate/:id", async (c) => {
   const db = getDb(); const x = loadAnomaly(db, c.req.param("id"));
