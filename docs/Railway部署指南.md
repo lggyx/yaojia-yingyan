@@ -23,7 +23,9 @@ Railway 从 GitHub 仓库拉代码部署，确保代码已推送。
 1. 打开 [railway.app](https://railway.app)，登录
 2. 点击 **New Project** → **Deploy from GitHub**
 3. 选择你的仓库
-4. Railway 会自动检测 `package.json`，不需要手动配置
+4. Railway 会检测到 monorepo 中有两个包：`@app/api` 和 `@app/web`
+5. **选择 `@app/api`**（API 会同时托管前端）
+6. Railway 会自动识别 Bun 运行时
 
 ### 3. 添加 Volume（持久化 SQLite 数据库）
 
