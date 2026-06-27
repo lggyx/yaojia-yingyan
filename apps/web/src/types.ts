@@ -81,6 +81,37 @@ export interface ChallengeResult {
   verdict: "confirmed" | "review" | "dismissed";
 }
 
+export type WorkOrderStatus = "pending" | "processing" | "done" | "closed";
+
+export interface WorkOrder {
+  id: string;
+  anomalyId: string;
+  type: string;
+  status: WorkOrderStatus;
+  assignee: string | null;
+  sla?: string | null;
+  correctedPrice?: number | null;
+  note: string | null;
+  createdAt?: string;
+  updatedAt: string;
+}
+
+export interface BoardColumn {
+  status: WorkOrderStatus;
+  cards: WorkOrder[];
+}
+
+export interface BoardResult {
+  columns: BoardColumn[];
+}
+
+export interface RecheckResult {
+  corrected: boolean;
+  latestPrice: number;
+  deviationNow: number | null;
+  canClose: boolean;
+}
+
 export interface PageResult<T> {
   items: T[];
   total: number;

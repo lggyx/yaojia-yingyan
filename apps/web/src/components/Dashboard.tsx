@@ -1,14 +1,20 @@
-import type { Anomaly, PriceDetail, PriceRecord, StatsOverview } from "../types";
+import type { Anomaly, BoardResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "../types";
+import { KanbanBoard } from "./KanbanBoard";
 import { KpiCards } from "./KpiCards";
 import { PriceTable } from "./PriceTable";
 import { TrendChart } from "./TrendChart";
 
-export function Dashboard({ stats, records, anomalies, selectedDetail, onSelectRecord }: {
+export function Dashboard({ stats, records, anomalies, selectedDetail, board, recheckMap, busyWorkOrderId, onSelectRecord, onAdvanceWorkOrder, onRecheckWorkOrder }: {
   stats: StatsOverview;
   records: PriceRecord[];
   anomalies: Anomaly[];
   selectedDetail: PriceDetail | null;
+  board: BoardResult | null;
+  recheckMap: Record<string, RecheckResult>;
+  busyWorkOrderId: string | null;
   onSelectRecord: (id: string, anomalyId?: string) => void;
+  onAdvanceWorkOrder: (workOrder: WorkOrder) => void;
+  onRecheckWorkOrder: (workOrder: WorkOrder) => void;
 }) {
   return (
     <main className="min-h-[100dvh] px-4 py-4 text-sentinel-ink md:px-8 md:py-6">
@@ -29,6 +35,7 @@ export function Dashboard({ stats, records, anomalies, selectedDetail, onSelectR
           <PriceTable records={records} anomalies={anomalies} selectedId={selectedDetail?.id ?? null} onSelect={onSelectRecord} />
           <TrendChart detail={selectedDetail} />
         </div>
+        <KanbanBoard board={board} recheckMap={recheckMap} busyId={busyWorkOrderId} onAdvance={onAdvanceWorkOrder} onRecheck={onRecheckWorkOrder} />
       </div>
     </main>
   );

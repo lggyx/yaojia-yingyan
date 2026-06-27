@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { AnomalyDetail } from "./components/AnomalyDetail";
 import { Dashboard } from "./components/Dashboard";
+import { getNextStatus } from "./components/KanbanBoard";
 import { api } from "./lib/api";
-import type { Anomaly, AnomalyDetail as Detail, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, StatsOverview } from "./types";
+import type { Anomaly, AnomalyDetail as Detail, BoardResult, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "./types";
 
 export default function App() {
   const [stats, setStats] = useState<StatsOverview | null>(null);
@@ -12,6 +13,9 @@ export default function App() {
   const [selectedAnomaly, setSelectedAnomaly] = useState<Detail | null>(null);
   const [investigateResult, setInvestigateResult] = useState<InvestigateResult | null>(null);
   const [challengeResult, setChallengeResult] = useState<ChallengeResult | null>(null);
+  const [board, setBoard] = useState<BoardResult | null>(null);
+  const [recheckMap, setRecheckMap] = useState<Record<string, RecheckResult>>({});
+  const [busyWorkOrderId, setBusyWorkOrderId] = useState<string | null>(null);
   const [investigating, setInvestigating] = useState(false);
   const [challenging, setChallenging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,12 +27,14 @@ export default function App() {
         api.getStats() as Promise<StatsOverview>,
         api.getPrices("?pageSize=12") as Promise<PageResult<PriceRecord>>,
         api.getAnomalies() as Promise<PageResult<Anomaly>>,
+        api.getBoard() as Promise<BoardResult>,
       ]))
-      .then(async ([nextStats, pricePage, anomalyPage]) => {
+      .then(async ([nextStats, pricePage, anomalyPage, nextBoard]) => {
         if (!active) return;
         setStats(nextStats);
         setRecords(pricePage.items);
         setAnomalies(anomalyPage.items);
+        setBoard(nextBoard);
         if (pricePage.items[0]) {
           const detail = await api.getPrice(pricePage.items[0].id) as PriceDetail;
           if (active) setSelectedDetail(detail);
@@ -73,6 +79,28 @@ export default function App() {
       .finally(() => setChallenging(false));
   };
 
+  const refreshBoard = () => api.getBoard().then(nextBoard => setBoard(nextBoard as BoardResult));
+
+  const advanceWorkOrder = (workOrder: WorkOrder) => {
+    const status = getNextStatus(workOrder.status);
+    setBusyWorkOrderId(workOrder.id);
+    api.patchWorkOrder(workOrder.id, { status, note: status === "closed" ? "整改复核通过，闭环归档" : "按处置流程推进" })
+      .then(refreshBoard)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setBusyWorkOrderId(null));
+  };
+
+  const recheckWorkOrder = (workOrder: WorkOrder) => {
+    setBusyWorkOrderId(workOrder.id);
+    api.recheck(workOrder.id)
+      .then(result => {
+        setRecheckMap(current => ({ ...current, [workOrder.id]: result as RecheckResult }));
+        return refreshBoard();
+      })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setBusyWorkOrderId(null));
+  };
+
   if (error) {
     return (
       <main className="grid min-h-[100dvh] place-items-center px-4 text-sentinel-ink">
@@ -105,7 +133,12 @@ export default function App() {
         records={records}
         anomalies={anomalies}
         selectedDetail={selectedDetail}
+        board={board}
+        recheckMap={recheckMap}
+        busyWorkOrderId={busyWorkOrderId}
         onSelectRecord={selectRecord}
+        onAdvanceWorkOrder={advanceWorkOrder}
+        onRecheckWorkOrder={recheckWorkOrder}
       />
       <AnomalyDetail
         detail={selectedAnomaly}
