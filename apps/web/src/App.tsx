@@ -200,10 +200,23 @@ export default function App() {
     setSelectedWorkOrderId(workOrder.id);
     setBusyWorkOrderId(workOrder.id);
     api.recheck(workOrder.id)
-      .then(result => {
-        setRecheckMap(current => ({ ...current, [workOrder.id]: result as RecheckResult }));
+      .then(async (result) => {
+        const recheck = result as RecheckResult;
+        setRecheckMap(current => ({ ...current, [workOrder.id]: recheck }));
+        // 复核通过 → 自动闭环
+        if (recheck.canClose) {
+          await api.patchWorkOrder(workOrder.id, { status: "closed", note: "整改复核通过，闭环归档" });
+        }
         return refreshBoard();
       })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setBusyWorkOrderId(null));
+  };
+
+  const returnWorkOrder = (workOrder: WorkOrder) => {
+    setBusyWorkOrderId(workOrder.id);
+    api.patchWorkOrder(workOrder.id, { status: "processing", note: "复核未通过，退回重新处置" })
+      .then(refreshBoard)
       .catch((err: Error) => setError(err.message))
       .finally(() => setBusyWorkOrderId(null));
   };
@@ -278,6 +291,7 @@ export default function App() {
         selectedWorkOrderId={selectedWorkOrderId}
         onAdvanceWorkOrder={advanceWorkOrder}
         onRecheckWorkOrder={recheckWorkOrder}
+        onReturnWorkOrder={returnWorkOrder}
       />
     ),
     recheck: (
@@ -287,6 +301,7 @@ export default function App() {
         busyWorkOrderId={busyWorkOrderId}
         onAdvanceWorkOrder={advanceWorkOrder}
         onRecheckWorkOrder={recheckWorkOrder}
+        onReturnWorkOrder={returnWorkOrder}
       />
     ),
     "data-rules": <DataRulesPage />,

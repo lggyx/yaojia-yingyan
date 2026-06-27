@@ -1,13 +1,14 @@
 import type { BoardResult, RecheckResult, WorkOrder } from "../types";
 import { KanbanBoard } from "./KanbanBoard";
 
-export function WorkOrdersPage({ board, recheckMap, busyWorkOrderId, selectedWorkOrderId, onAdvanceWorkOrder, onRecheckWorkOrder }: {
+export function WorkOrdersPage({ board, recheckMap, busyWorkOrderId, selectedWorkOrderId, onAdvanceWorkOrder, onRecheckWorkOrder, onReturnWorkOrder }: {
   board: BoardResult | null;
   recheckMap: Record<string, RecheckResult>;
   busyWorkOrderId: string | null;
   selectedWorkOrderId: string | null;
   onAdvanceWorkOrder: (workOrder: WorkOrder) => void;
   onRecheckWorkOrder: (workOrder: WorkOrder) => void;
+  onReturnWorkOrder: (workOrder: WorkOrder) => void;
 }) {
   const workOrders = board?.columns.flatMap(column => column.cards) ?? [];
   const selected = workOrders.find(item => item.id === selectedWorkOrderId) ?? workOrders[0] ?? null;
@@ -20,7 +21,7 @@ export function WorkOrdersPage({ board, recheckMap, busyWorkOrderId, selectedWor
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[#60746b]">按 pending → processing → done → closed 状态机推进，闭环前必须完成复核。</p>
       </header>
       <div className="grid gap-4 2xl:grid-cols-[1fr_360px]">
-        <KanbanBoard board={board} recheckMap={recheckMap} busyId={busyWorkOrderId} onAdvance={onAdvanceWorkOrder} onRecheck={onRecheckWorkOrder} />
+        <KanbanBoard board={board} recheckMap={recheckMap} busyId={busyWorkOrderId} onAdvance={onAdvanceWorkOrder} onRecheck={onRecheckWorkOrder} onReturn={onReturnWorkOrder} />
         <aside className="rounded-md border border-sentinel-line bg-white p-4 shadow-sm">
           <h2 className="text-base font-semibold">工单详情</h2>
           {selected ? (

@@ -52,13 +52,14 @@ export function AnomaliesPage({ records, anomalies, selectedDetail, selectedAnom
           onChallenge={onChallenge}
           onReport={onReport}
           onCreateWorkOrder={onCreateWorkOrder}
+          onRefresh={onRefresh}
         />
       </div>
     </div>
   );
 }
 
-function InvestigationRail({ detail, investigating, challenging, reporting, creatingWorkOrder, workOrderExists, investigateResult, challengeResult, aiReport, onInvestigate, onChallenge, onReport, onCreateWorkOrder }: {
+function InvestigationRail({ detail, investigating, challenging, reporting, creatingWorkOrder, workOrderExists, investigateResult, challengeResult, aiReport, onInvestigate, onChallenge, onReport, onCreateWorkOrder, onRefresh }: {
   detail: Detail | null;
   investigating: boolean;
   challenging: boolean;

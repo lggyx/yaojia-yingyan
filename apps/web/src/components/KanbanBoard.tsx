@@ -13,12 +13,13 @@ const nextStatus: Partial<Record<WorkOrderStatus, WorkOrderStatus>> = {
   done: "closed",
 };
 
-export function KanbanBoard({ board, recheckMap, busyId, onAdvance, onRecheck }: {
+export function KanbanBoard({ board, recheckMap, busyId, onAdvance, onRecheck, onReturn }: {
   board: BoardResult | null;
   recheckMap: Record<string, RecheckResult>;
   busyId: string | null;
   onAdvance: (workOrder: WorkOrder) => void;
   onRecheck: (workOrder: WorkOrder) => void;
+  onReturn: (workOrder: WorkOrder) => void;
 }) {
   if (!board) {
     return <section className="h-64 animate-pulse rounded-md border border-sentinel-line bg-white" />;
@@ -71,6 +72,11 @@ export function KanbanBoard({ board, recheckMap, busyId, onAdvance, onRecheck }:
                     <button className="rounded border border-sentinel-line px-2.5 py-1.5 text-xs hover:bg-[#eef3ef] disabled:opacity-50" disabled={busyId === card.id || card.status !== "done"} onClick={() => onRecheck(card)}>
                       复核
                     </button>
+                    {recheckMap[card.id]?.canClose === false && (
+                      <button className="rounded border border-[#e6a817] px-2.5 py-1.5 text-xs text-[#e6a817] hover:bg-[#fff8e6] disabled:opacity-50" disabled={busyId === card.id} onClick={() => onReturn(card)}>
+                        退回处置
+                      </button>
+                    )}
                   </div>
                 </article>
               ))}

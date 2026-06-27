@@ -48,7 +48,12 @@ r.patch("/work-orders/:id", async (c) => {
   const body = await c.req.json();
   const current = db.query("SELECT status FROM work_orders WHERE id=?").get(id) as { status: string } | null;
   if (!current) return c.json({ code: 1, msg: "not found" }, 404);
-  if (nextStatus[current.status] !== body.status) return c.json({ code: 1, msg: "invalid status transition" }, 400);
+  if (nextStatus[current.status] !== body.status) {
+    // 允许 done → processing 退回（复核失败后重新处置）
+    if (!(current.status === "done" && body.status === "processing")) {
+      return c.json({ code: 1, msg: "invalid status transition" }, 400);
+    }
+  }
   if (body.status === "closed") {
     const passed = db.query(`SELECT 1 FROM work_order_events
       WHERE work_order_id=? AND to_status='recheck_passed' ORDER BY created_at DESC LIMIT 1`).get(id);
@@ -59,7 +64,7 @@ r.patch("/work-orders/:id", async (c) => {
     note=COALESCE(?,note), updated_at=? WHERE id=?`)
     .run(body.status, body.correctedPrice ?? null, body.note ?? null, TS, id);
   db.prepare("INSERT INTO work_order_events (id,work_order_id,from_status,to_status,note,created_at) VALUES (?,?,?,?,?,?)")
-    .run(`E-${id}-${body.status}`, id, current.status, body.status, body.note ?? null, TS);
+    .run(`E-${id}-${crypto.randomUUID()}`, id, current.status, body.status, body.note ?? null, TS);
 
   if (body.status === "closed") {
     const workOrder = db.query("SELECT anomaly_id anomalyId FROM work_orders WHERE id=?").get(id) as { anomalyId: string };

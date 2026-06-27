@@ -98,15 +98,18 @@ export function CopilotSidebar({
 
   const handleTaskClick = (task: TaskItem) => {
     onNavigateTask(task.targetPage, task.targetId);
+    setOpen(false);
   };
 
   const handleLinkClick = (link: SuggestedLink) => {
     onNavigateTask(link.page, link.id);
+    setOpen(false);
   };
 
   const handleCitationClick = (citation: Citation) => {
     if (citation.type === "anomaly") onNavigateTask("anomalies", citation.id);
     if (citation.type === "work_order") onNavigateTask("work-orders", citation.id);
+    setOpen(false);
   };
 
   return (

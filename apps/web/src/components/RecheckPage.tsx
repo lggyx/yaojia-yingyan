@@ -1,11 +1,12 @@
 import type { BoardResult, RecheckResult, WorkOrder } from "../types";
 
-export function RecheckPage({ board, recheckMap, busyWorkOrderId, onAdvanceWorkOrder, onRecheckWorkOrder }: {
+export function RecheckPage({ board, recheckMap, busyWorkOrderId, onAdvanceWorkOrder, onRecheckWorkOrder, onReturnWorkOrder }: {
   board: BoardResult | null;
   recheckMap: Record<string, RecheckResult>;
   busyWorkOrderId: string | null;
   onAdvanceWorkOrder: (workOrder: WorkOrder) => void;
   onRecheckWorkOrder: (workOrder: WorkOrder) => void;
+  onReturnWorkOrder: (workOrder: WorkOrder) => void;
 }) {
   const workOrders = board?.columns.flatMap(column => column.cards) ?? [];
   const candidates = workOrders.filter(item => item.status === "done");
@@ -32,6 +33,9 @@ export function RecheckPage({ board, recheckMap, busyWorkOrderId, onAdvanceWorkO
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded border border-sentinel-line px-3 py-2 text-sm disabled:opacity-50" disabled={busyWorkOrderId === workOrder.id} onClick={() => onRecheckWorkOrder(workOrder)}>AI 复核</button>
                   <button className="rounded bg-sentinel-ink px-3 py-2 text-sm text-white disabled:opacity-50" disabled={busyWorkOrderId === workOrder.id || !result?.canClose} onClick={() => onAdvanceWorkOrder(workOrder)}>闭环</button>
+                  {result?.canClose === false && (
+                    <button className="rounded border border-[#e6a817] px-3 py-2 text-sm text-[#e6a817] disabled:opacity-50" disabled={busyWorkOrderId === workOrder.id} onClick={() => onReturnWorkOrder(workOrder)}>退回处置</button>
+                  )}
                 </div>
               </div>
               <div className="mt-4 rounded border border-sentinel-line bg-[#fbfcfb] p-3 text-sm text-[#40564d]">
