@@ -4,7 +4,7 @@
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1",
-    "dev:api": "bun run --cwd apps/api dev",
+    "dev:api": "powershell -ExecutionPolicy Bypass -Command \"Set-Location -LiteralPath 'apps/api'; bun --env-file ..\\..\\.env --hot src/index.ts\"",
     "dev:web": "bun run --cwd apps/web dev",
     "seed": "bun run --cwd apps/api seed",
     "build:web": "bun run --cwd apps/web build",

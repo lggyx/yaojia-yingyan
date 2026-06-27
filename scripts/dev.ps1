@@ -15,7 +15,7 @@ if ($lanIp) { Write-Host "LAN API: http://${lanIp}:8787" }
 Start-Process powershell -ArgumentList @(
   "-NoExit",
   "-ExecutionPolicy", "Bypass",
-  "-Command", "Set-Location -LiteralPath '$repo\apps\api'; & '$bun' run dev"
+  "-Command", "Set-Location -LiteralPath '$repo\apps\api'; if (Test-Path -LiteralPath '$repo\.env') { & '$bun' --env-file '..\..\.env' --hot src/index.ts } else { & '$bun' --hot src/index.ts }"
 )
 
 Write-Host "Starting Web on http://0.0.0.0:5173"
