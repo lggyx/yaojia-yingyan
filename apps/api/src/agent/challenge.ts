@@ -2,7 +2,6 @@ import type { Database } from "bun:sqlite";
 import type { Anomaly, PriceRecord, Rebuttal, ChallengeResult, RiskLevel } from "@shared/types";
 import { CONF_CONFIRM, CONF_REVIEW } from "@shared/constants";
 import { chat } from "./llm";
-import { normalize } from "../standardize/standardize";
 
 export function computeConfidence(rebuttals: Rebuttal[]): number {
   const checked = rebuttals.filter(r => r.checked);
