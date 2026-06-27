@@ -81,6 +81,61 @@ export interface ChallengeResult {
   verdict: "confirmed" | "review" | "dismissed";
 }
 
+export interface AiModelStatus {
+  mode: "mock" | "remote";
+  model: string;
+  provider: "openai-compatible";
+  baseConfigured: boolean;
+  keyConfigured: boolean;
+}
+
+export interface AiReasoningStep {
+  phase: "collect" | "rank" | "recommend" | "challenge" | "conclude";
+  title: string;
+  detail: string;
+}
+
+export interface AiPriority {
+  anomalyId: string;
+  recordId: string;
+  title: string;
+  level: "high" | "mid" | "low";
+  riskScore: number;
+  reason: string;
+  target: "investigate" | "workorder" | "review";
+}
+
+export interface AiSuggestedAction {
+  label: string;
+  target: "investigate" | "workorder" | "review";
+  anomalyId?: string;
+}
+
+export interface AiBriefing {
+  generatedAt: string;
+  summary: string;
+  priorities: AiPriority[];
+  actions: AiSuggestedAction[];
+  reasoningSteps: AiReasoningStep[];
+}
+
+export interface AiInvestigationReport {
+  anomalyId: string;
+  recordId: string;
+  generatedAt: string;
+  investigation: InvestigateResult;
+  challenge: ChallengeResult;
+  conclusion: {
+    verdict: ChallengeResult["verdict"];
+    riskLevel: "high" | "mid" | "low";
+    confidence: number;
+    suggestedDisposition: string;
+    summary: string;
+  };
+  reasoningSteps: AiReasoningStep[];
+  nextActions: AiSuggestedAction[];
+}
+
 export type WorkOrderStatus = "pending" | "processing" | "done" | "closed";
 
 export interface WorkOrder {
@@ -94,6 +149,14 @@ export interface WorkOrder {
   note: string | null;
   createdAt?: string;
   updatedAt: string;
+  riskLevel?: "high" | "mid" | "low";
+  riskScore?: number;
+  generic?: string;
+  hospital?: string;
+  region?: string;
+  currentStep?: string;
+  nextStep?: string;
+  lastEvent?: string | null;
 }
 
 export interface BoardColumn {
