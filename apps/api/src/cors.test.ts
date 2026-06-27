@@ -18,3 +18,7 @@ test("api allows cross-origin preflight requests", async () => {
   expect(res.headers.get("Access-Control-Allow-Headers")?.toLowerCase()).toContain("authorization");
   expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
 });
+
+test("api listens on all network interfaces for LAN access", () => {
+  expect(server.hostname).toBe("0.0.0.0");
+});

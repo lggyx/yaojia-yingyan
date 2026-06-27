@@ -27,4 +27,4 @@ app.route("/api", board);
 
 export const ok = (data: unknown) => ({ code: 0, data, msg: "ok" });
 export const fail = (msg: string) => ({ code: 1, msg });
-export default { port: 8787, fetch: app.fetch };
+export default { port: 8787, hostname: "0.0.0.0", fetch: app.fetch };

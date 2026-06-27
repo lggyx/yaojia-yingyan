@@ -33,6 +33,13 @@ bun run dev
 - API: `http://localhost:8787`
 - Web: `http://localhost:5173`
 
+局域网内另一台设备访问时，使用运行开发服务这台电脑的 IPv4 地址，例如：
+
+- API: `http://<本机局域网IP>:8787`
+- Web: `http://<本机局域网IP>:5173`
+
+API 和 Web 开发服务都会监听 `0.0.0.0`。如果另一台设备无法打开，请检查 Windows 防火墙是否允许 8787 和 5173 端口入站访问。
+
 如果需要手动分开启动：
 
 ```powershell
