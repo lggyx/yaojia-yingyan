@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CopilotChatResponse, CopilotMessage, PageKey, SuggestedLink, TaskItem } from "../types";
+import type { CopilotChatResponse, CopilotContext, CopilotMessage, PageKey, SuggestedLink, TaskItem } from "../types";
 import { api } from "../lib/api";
+
+type Citation = CopilotChatResponse["citations"][number];
 
 export function CopilotSidebar({
   activePage,
@@ -17,6 +19,8 @@ export function CopilotSidebar({
   const [messages, setMessages] = useState<CopilotMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [citations, setCitations] = useState<Citation[]>([]);
   const [suggestedTasks, setSuggestedTasks] = useState<TaskItem[]>([]);
   const [suggestedLinks, setSuggestedLinks] = useState<SuggestedLink[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
@@ -26,6 +30,32 @@ export function CopilotSidebar({
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setContextLoading(true);
+    api.getCopilotContext()
+      .then(result => {
+        if (!active) return;
+        const context = result as CopilotContext;
+        setSuggestedTasks(context.tasks.slice(0, 4));
+        setSuggestedLinks(context.tasks.slice(0, 3).map(task => ({
+          label: task.label,
+          page: task.targetPage,
+          id: task.targetId,
+        })));
+      })
+      .catch(() => {
+        if (active) setSuggestedTasks([]);
+      })
+      .finally(() => {
+        if (active) setContextLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -49,6 +79,7 @@ export function CopilotSidebar({
 
       const assistantMsg: CopilotMessage = { role: "assistant", content: res.answer };
       setMessages(prev => [...prev, assistantMsg]);
+      setCitations(res.citations ?? []);
       setSuggestedTasks(res.suggestedTasks ?? []);
       setSuggestedLinks(res.suggestedLinks ?? []);
     } catch {
@@ -71,6 +102,11 @@ export function CopilotSidebar({
 
   const handleLinkClick = (link: SuggestedLink) => {
     onNavigateTask(link.page, link.id);
+  };
+
+  const handleCitationClick = (citation: Citation) => {
+    if (citation.type === "anomaly") onNavigateTask("anomalies", citation.id);
+    if (citation.type === "work_order") onNavigateTask("work-orders", citation.id);
   };
 
   return (
@@ -115,7 +151,7 @@ export function CopilotSidebar({
         <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-3">
           {messages.length === 0 && !loading && (
             <div className="py-8 text-center">
-              <p className="text-sm text-[#60746b]">👋 你好！我是药价鹰眼智能助手</p>
+              <p className="text-sm text-[#60746b]">你好！我是药价鹰眼智能助手</p>
               <p className="mt-2 text-xs text-[#8ca296]">可以问我"今天先做什么"、"这条为什么异常"或"下一步建议"</p>
             </div>
           )}
@@ -140,6 +176,30 @@ export function CopilotSidebar({
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sentinel-risk" style={{ animationDelay: "0.2s" }} />
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sentinel-risk" style={{ animationDelay: "0.4s" }} />
                 </span>
+              </div>
+            </div>
+          )}
+
+          {contextLoading && messages.length === 0 && (
+            <div className="mb-3 rounded-md border border-sentinel-line bg-[#f7fbf8] px-3 py-2 text-xs text-[#60746b]">
+              正在读取今日任务上下文...
+            </div>
+          )}
+
+          {citations.length > 0 && (
+            <div className="mb-4 mt-2">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#60746b]">引用依据</p>
+              <div className="flex flex-wrap gap-2">
+                {citations.map(citation => (
+                  <button
+                    key={`${citation.type}-${citation.id}`}
+                    type="button"
+                    onClick={() => handleCitationClick(citation)}
+                    className="rounded-full border border-sentinel-line bg-[#f7fbf8] px-3 py-1 text-xs text-sentinel-ink hover:border-[#b9d7c8] hover:bg-[#e7f4eb]"
+                  >
+                    {citation.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
