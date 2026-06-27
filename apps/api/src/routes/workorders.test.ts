@@ -80,7 +80,17 @@ describe("work order routes", () => {
     const boardRes = await app.request("/api/board");
     const boardJson = await boardRes.json();
     expect(boardJson.data.columns.find((col: any) => col.status === "closed").cards)
-      .toContainEqual(expect.objectContaining({ id: "WO-A-S1", status: "closed" }));
+      .toContainEqual(expect.objectContaining({
+        id: "WO-A-S1",
+        status: "closed",
+        generic: "硫酸氢氯吡格雷片",
+        hospital: "县人民医院",
+        region: "安徽省",
+        riskLevel: "high",
+        currentStep: "已闭环",
+        nextStep: "归档复盘",
+        lastEvent: "AI复核通过，归档",
+      }));
   });
 
   test("rejects missing anomalies, duplicate work orders, invalid transitions, and unverified closure", async () => {
