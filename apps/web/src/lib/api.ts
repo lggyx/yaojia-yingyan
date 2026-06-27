@@ -1,0 +1,28 @@
+const jsonInit = (method: string, body?: unknown): RequestInit => ({
+  method,
+  headers: { "Content-Type": "application/json" },
+  ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+});
+
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`/api${path}`, init);
+  const json = await response.json();
+  if (json.code !== 0) throw new Error(json.msg ?? "request failed");
+  return json.data as T;
+}
+
+export const api = {
+  getStats: () => call("/stats/overview"),
+  getPrices: (query = "") => call(`/prices${query}`),
+  getPrice: (id: string) => call(`/prices/${id}`),
+  detect: () => call("/detect", jsonInit("POST", {})),
+  getAnomalies: (query = "") => call(`/anomalies${query}`),
+  getAnomaly: (id: string) => call(`/anomalies/${id}`),
+  investigate: (id: string) => call(`/agent/investigate/${id}`, jsonInit("POST")),
+  challenge: (id: string) => call(`/agent/challenge/${id}`, jsonInit("POST")),
+  standardize: (records: unknown[]) => call("/tools/standardize", jsonInit("POST", { records })),
+  createWorkOrder: (body: unknown) => call("/work-orders", jsonInit("POST", body)),
+  patchWorkOrder: (id: string, body: unknown) => call(`/work-orders/${id}`, jsonInit("PATCH", body)),
+  recheck: (id: string) => call(`/work-orders/${id}/recheck`, jsonInit("POST", {})),
+  getBoard: () => call("/board"),
+};
