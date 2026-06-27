@@ -6,8 +6,10 @@ import { investigate } from "./orchestrator";
 const TS = "2026-06-27T00:00:00.000Z";
 
 export async function generateReport(db: Database, anomaly: Anomaly, record: PriceRecord): Promise<AiInvestigationReport> {
-  const investigation = await investigate(db, anomaly, record);
-  const redTeam = await challenge(db, anomaly, record);
+  const [investigation, redTeam] = await Promise.all([
+    investigate(db, anomaly, record),
+    challenge(db, anomaly, record),
+  ]);
   return {
     anomalyId: anomaly.id,
     recordId: anomaly.recordId,

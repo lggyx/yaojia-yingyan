@@ -181,3 +181,50 @@ export interface PageResult<T> {
   page?: number;
   pageSize?: number;
 }
+
+export type PageKey = "workspace" | "anomalies" | "work-orders" | "recheck" | "data-rules";
+
+export interface TaskItem {
+  id: string;
+  type: "investigate" | "create_work_order" | "advance" | "recheck" | "close";
+  label: string;
+  targetPage: PageKey;
+  targetId?: string;
+  priority: "high" | "mid" | "low";
+  anomalyId?: string;
+  workOrderId?: string;
+}
+
+export interface SuggestedLink {
+  label: string;
+  page: PageKey;
+  id?: string;
+}
+
+export interface CopilotContext {
+  stats: StatsOverview;
+  brief: AiBriefing | null;
+  tasks: TaskItem[];
+  modelStatus: AiModelStatus;
+  pendingAnomalyCount: number;
+  pendingReviewCount: number;
+}
+
+export interface CopilotMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface CopilotChatResponse {
+  answer: string;
+  citations: Array<{ type: string; id: string; label: string }>;
+  suggestedTasks: TaskItem[];
+  suggestedLinks: SuggestedLink[];
+}
+
+export interface RuleConfig {
+  tenderRatio: number;
+  historyMoM: number;
+  regionalDev: number;
+  volumeRate: number;
+}
