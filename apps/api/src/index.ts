@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serveStatic } from "hono/bun";
 import { getDb } from "./db/client";
 import { seedDb } from "./db/seed";
 import prices from "./routes/prices";
@@ -29,6 +30,11 @@ app.route("/api", board);
 app.route("/api", copilot);
 app.route("/api", rules);
 
+// 生产环境托管前端静态文件
+const staticDir = "../web/dist";
+app.get("/*", serveStatic({ root: staticDir }));
+app.get("/*", serveStatic({ root: staticDir, path: "index.html" }));
+
 export const ok = (data: unknown) => ({ code: 0, data, msg: "ok" });
 export const fail = (msg: string) => ({ code: 1, msg });
-export default { port: 8787, hostname: "0.0.0.0", fetch: app.fetch };
+export default { port: process.env.PORT ? +process.env.PORT : 8787, hostname: "0.0.0.0", fetch: app.fetch };
