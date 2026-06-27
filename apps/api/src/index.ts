@@ -4,6 +4,9 @@ import { getDb } from "./db/client";
 import { seedDb } from "./db/seed";
 import prices from "./routes/prices";
 import anomalies from "./routes/anomalies";
+import agent from "./routes/agent";
+import workorders from "./routes/workorders";
+import board from "./routes/board";
 
 const db = getDb();
 if ((db.query("SELECT COUNT(*) c FROM price_records").get() as { c: number }).c === 0) seedDb(db);
@@ -13,6 +16,9 @@ app.use("*", cors());
 app.get("/health", (c) => c.json({ code: 0, msg: "ok" }));
 app.route("/api", prices);
 app.route("/api", anomalies);
+app.route("/api", agent);
+app.route("/api", workorders);
+app.route("/api", board);
 
 export const ok = (data: unknown) => ({ code: 0, data, msg: "ok" });
 export const fail = (msg: string) => ({ code: 1, msg });
