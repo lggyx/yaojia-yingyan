@@ -17,4 +17,6 @@ export function initSchema(db: Database) {
     sla TEXT, corrected_price REAL, note TEXT, created_at TEXT, updated_at TEXT)`);
   db.run(`CREATE TABLE IF NOT EXISTS work_order_events(
     id TEXT PRIMARY KEY, work_order_id TEXT, from_status TEXT, to_status TEXT, note TEXT, created_at TEXT)`);
+  db.run(`CREATE TABLE IF NOT EXISTS rule_config(
+    key TEXT PRIMARY KEY, value TEXT)`);
 }

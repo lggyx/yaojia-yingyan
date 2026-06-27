@@ -41,4 +41,50 @@ r.get("/stats/overview", (c) => {
     closedRate: aRows.length ? +(closed/aRows.length).toFixed(2) : 0, dismissedCount: dismissed }));
 });
 
+// ─── Price CRUD ───
+
+r.post("/prices", async (c) => {
+  const db = getDb();
+  const body = await c.req.json();
+  const id = body.id ?? crypto.randomUUID();
+  db.prepare(`INSERT INTO price_records
+    (id,mi_code,generic,brand,manufacturer,spec,form,category,price,tender_price,agreed_volume,actual_volume,listing_price,hospital,region,date)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id, body.miCode ?? "", body.generic ?? "", body.brand ?? "", body.manufacturer ?? "",
+      body.spec ?? "", body.form ?? "", body.category ?? "drug", body.price ?? 0,
+      body.tenderPrice ?? null, body.agreedVolume ?? null, body.actualVolume ?? null, body.listingPrice ?? null,
+      body.hospital ?? "", body.region ?? "", body.date ?? new Date().toISOString().slice(0, 10));
+  return c.json(ok({ id }));
+});
+
+r.patch("/prices/:id", async (c) => {
+  const db = getDb();
+  const id = c.req.param("id");
+  const existing = db.query("SELECT id FROM price_records WHERE id=?").get(id);
+  if (!existing) return c.json({ code: 1, msg: "not found" }, 404);
+  const body = await c.req.json();
+  const fields: string[] = [];
+  const vals: any[] = [];
+  const allowed = ["mi_code","generic","brand","manufacturer","spec","form","category","price","tender_price","agreed_volume","actual_volume","listing_price","hospital","region","date"];
+  for (const [k, v] of Object.entries(body)) {
+    const col = k.replace(/([A-Z])/g, "_$1").toLowerCase();
+    if (allowed.includes(col)) { fields.push(`${col}=?`); vals.push(v); }
+  }
+  if (fields.length === 0) return c.json({ code: 1, msg: "no valid fields" }, 400);
+  vals.push(id);
+  db.prepare(`UPDATE price_records SET ${fields.join(", ")} WHERE id=?`).run(...vals);
+  return c.json(ok({ id }));
+});
+
+r.delete("/prices/:id", (c) => {
+  const db = getDb();
+  const id = c.req.param("id");
+  const existing = db.query("SELECT id FROM price_records WHERE id=?").get(id);
+  if (!existing) return c.json({ code: 1, msg: "not found" }, 404);
+  const linked = db.query("SELECT COUNT(*) c FROM anomalies WHERE record_id=?").get(id) as { c: number };
+  if (linked.c > 0) return c.json({ code: 1, msg: "存在关联异常记录，请先归档后再删除" }, 409);
+  db.prepare("DELETE FROM price_records WHERE id=?").run(id);
+  return c.json(ok({ id }));
+});
+
 export default r;

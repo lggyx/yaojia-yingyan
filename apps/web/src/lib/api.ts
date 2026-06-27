@@ -30,4 +30,11 @@ export const api = {
   getBoard: () => call("/board"),
   getCopilotContext: () => call("/copilot/context"),
   postCopilotChat: (body: unknown) => call("/copilot/chat", jsonInit("POST", body)),
+  createPrice: (body: unknown) => call("/prices", jsonInit("POST", body)),
+  updatePrice: (id: string, body: unknown) => call(`/prices/${id}`, jsonInit("PATCH", body)),
+  deletePrice: (id: string) => call(`/prices/${id}`, jsonInit("DELETE")),
+  getRulesConfig: () => call("/rules/config"),
+  patchRulesConfig: (body: unknown) => call("/rules/config", jsonInit("PATCH", body)),
+  patchAnomaly: (id: string, body: unknown) => call(`/anomalies/${id}`, jsonInit("PATCH", body)),
+  detectWithThresholds: (thresholds: unknown) => call("/detect", jsonInit("POST", { thresholds })),
 };

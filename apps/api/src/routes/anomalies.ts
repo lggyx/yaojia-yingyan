@@ -46,4 +46,20 @@ r.get("/anomalies/:id", (c) => {
   return c.json(ok({ ...rowToAnomaly(a), record }));
 });
 
+r.patch("/anomalies/:id", async (c) => {
+  const db = getDb();
+  const id = c.req.param("id");
+  const existing = db.query("SELECT id FROM anomalies WHERE id=?").get(id);
+  if (!existing) return c.json({ code: 1, msg: "not found" }, 404);
+  const body = await c.req.json();
+  if (body.status) {
+    db.prepare("UPDATE anomalies SET status=? WHERE id=?").run(body.status, id);
+  }
+  if (body.note !== undefined) {
+    db.prepare("INSERT INTO agent_traces (id,anomaly_id,kind,payload,created_at) VALUES (?,?,?,?,?)")
+      .run(`T-note-${id}-${crypto.randomUUID()}`, id, "note", JSON.stringify({ note: body.note }), new Date().toISOString());
+  }
+  return c.json(ok({ id }));
+});
+
 export default r;

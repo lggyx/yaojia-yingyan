@@ -124,6 +124,12 @@ export default function App() {
 
   const refreshBoard = () => api.getBoard().then(nextBoard => setBoard(nextBoard as BoardResult));
 
+  const refreshAnomalies = () => {
+    api.getAnomalies()
+      .then((res) => setAnomalies((res as PageResult<Anomaly>).items))
+      .catch((err: Error) => setError(err.message));
+  };
+
   const workOrders = board && Array.isArray(board.columns) ? board.columns.flatMap(column => column.cards) : [];
 
   const tasks: TaskItem[] = [
@@ -261,6 +267,7 @@ export default function App() {
         onChallenge={challengeSelected}
         onReport={reportSelected}
         onCreateWorkOrder={createWorkOrderFromReport}
+        onRefresh={refreshAnomalies}
       />
     ),
     "work-orders": (

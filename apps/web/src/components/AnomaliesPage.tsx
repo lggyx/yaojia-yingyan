@@ -1,10 +1,12 @@
+import { useState } from "react";
 import type { AiInvestigationReport, Anomaly, AnomalyDetail as Detail, ChallengeResult, InvestigateResult, PriceDetail, PriceRecord } from "../types";
 import { AgentTrace } from "./AgentTrace";
 import { ChallengePanel } from "./ChallengePanel";
 import { PriceTable } from "./PriceTable";
 import { TrendChart } from "./TrendChart";
+import { api } from "../lib/api";
 
-export function AnomaliesPage({ records, anomalies, selectedDetail, selectedAnomaly, investigating, challenging, reporting, creatingWorkOrder, workOrderExists, investigateResult, challengeResult, aiReport, onSelectRecord, onInvestigate, onChallenge, onReport, onCreateWorkOrder }: {
+export function AnomaliesPage({ records, anomalies, selectedDetail, selectedAnomaly, investigating, challenging, reporting, creatingWorkOrder, workOrderExists, investigateResult, challengeResult, aiReport, onSelectRecord, onInvestigate, onChallenge, onReport, onCreateWorkOrder, onRefresh }: {
   records: PriceRecord[];
   anomalies: Anomaly[];
   selectedDetail: PriceDetail | null;
@@ -22,6 +24,7 @@ export function AnomaliesPage({ records, anomalies, selectedDetail, selectedAnom
   onChallenge: () => void;
   onReport: () => void;
   onCreateWorkOrder: () => void;
+  onRefresh: () => void;
 }) {
   return (
     <div className="grid gap-4">
@@ -69,6 +72,7 @@ function InvestigationRail({ detail, investigating, challenging, reporting, crea
   onChallenge: () => void;
   onReport: () => void;
   onCreateWorkOrder: () => void;
+  onRefresh: () => void;
 }) {
   return (
     <aside className="rounded-md border border-sentinel-line bg-white p-4 shadow-sm">
@@ -99,6 +103,15 @@ function InvestigationRail({ detail, investigating, challenging, reporting, crea
           <button className="rounded bg-sentinel-ink px-3 py-2 text-sm text-white disabled:opacity-50" disabled={!aiReport || creatingWorkOrder || workOrderExists} onClick={onCreateWorkOrder}>{workOrderExists ? "已进入看板" : creatingWorkOrder ? "创建中" : "按 AI 建议创建工单"}</button>
         </StepCard>
       </div>
+      {detail && (
+        <div className="mt-4 border-t border-sentinel-line pt-3">
+          <p className="text-xs font-semibold text-[#60746b]">状态修正</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <StatusButton detail={detail} newStatus="dismissed" label="人工消解" onRefresh={onRefresh} />
+            <StatusButton detail={detail} newStatus="pending" label="重新检测" onRefresh={onRefresh} />
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -109,5 +122,36 @@ function StepCard({ title, active, children }: { title: string; active: boolean;
       <h3 className="text-sm font-semibold">{title}</h3>
       <div className="mt-3">{children}</div>
     </section>
+  );
+}
+
+function StatusButton({ detail, newStatus, label, onRefresh }: {
+  detail: Detail;
+  newStatus: string;
+  label: string;
+  onRefresh: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+
+  const handle = async () => {
+    setBusy(true);
+    try {
+      await api.patchAnomaly(detail.id, { status: newStatus, note: `人工操作：${label}` });
+      onRefresh();
+    } catch {
+      // ignore
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      className="rounded border border-sentinel-line px-2 py-1 text-xs text-[#60746b] hover:border-[#b9d7c8] hover:bg-[#f7fbf8] disabled:opacity-50"
+      disabled={busy || detail.status === newStatus}
+      onClick={handle}
+    >
+      {busy ? "处理中" : label}
+    </button>
   );
 }
