@@ -6,6 +6,7 @@ import { RecheckPage } from "./components/RecheckPage";
 import { SideNav } from "./components/SideNav";
 import { WorkOrdersPage } from "./components/WorkOrdersPage";
 import { WorkspacePage } from "./components/WorkspacePage";
+import { CopilotSidebar } from "./components/CopilotSidebar";
 import { api } from "./lib/api";
 import type { AiBriefing, AiInvestigationReport, AiModelStatus, Anomaly, AnomalyDetail as Detail, BoardResult, ChallengeResult, InvestigateResult, PageKey, PageResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, TaskItem, WorkOrder } from "./types";
 
@@ -299,6 +300,12 @@ export default function App() {
           {pageContent[activePage]}
         </div>
       </main>
+      <CopilotSidebar
+        activePage={activePage}
+        selectedAnomalyId={selectedAnomaly?.id ?? null}
+        selectedWorkOrderId={selectedWorkOrderId}
+        onNavigateTask={navigateTask}
+      />
     </div>
   );
 }

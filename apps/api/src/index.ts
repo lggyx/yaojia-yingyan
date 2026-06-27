@@ -7,6 +7,7 @@ import anomalies from "./routes/anomalies";
 import agent from "./routes/agent";
 import workorders from "./routes/workorders";
 import board from "./routes/board";
+import copilot from "./routes/copilot";
 
 const db = getDb();
 if ((db.query("SELECT COUNT(*) c FROM price_records").get() as { c: number }).c === 0) seedDb(db);
@@ -24,6 +25,7 @@ app.route("/api", anomalies);
 app.route("/api", agent);
 app.route("/api", workorders);
 app.route("/api", board);
+app.route("/api", copilot);
 
 export const ok = (data: unknown) => ({ code: 0, data, msg: "ok" });
 export const fail = (msg: string) => ({ code: 1, msg });

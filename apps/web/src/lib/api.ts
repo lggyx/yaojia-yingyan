@@ -28,4 +28,6 @@ export const api = {
   patchWorkOrder: (id: string, body: unknown) => call(`/work-orders/${id}`, jsonInit("PATCH", body)),
   recheck: (id: string) => call(`/work-orders/${id}/recheck`, jsonInit("POST", {})),
   getBoard: () => call("/board"),
+  getCopilotContext: () => call("/copilot/context"),
+  postCopilotChat: (body: unknown) => call("/copilot/chat", jsonInit("POST", body)),
 };
