@@ -1,18 +1,22 @@
-import type { Anomaly, BoardResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "../types";
+import type { AiBriefing, AiModelStatus, Anomaly, BoardResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "../types";
+import { AiBriefingPanel } from "./AiBriefingPanel";
 import { KanbanBoard } from "./KanbanBoard";
 import { KpiCards } from "./KpiCards";
 import { PriceTable } from "./PriceTable";
 import { TrendChart } from "./TrendChart";
 
-export function Dashboard({ stats, records, anomalies, selectedDetail, board, recheckMap, busyWorkOrderId, onSelectRecord, onAdvanceWorkOrder, onRecheckWorkOrder }: {
+export function Dashboard({ stats, records, anomalies, selectedDetail, board, aiStatus, aiBriefing, recheckMap, busyWorkOrderId, onSelectRecord, onSelectAnomaly, onAdvanceWorkOrder, onRecheckWorkOrder }: {
   stats: StatsOverview;
   records: PriceRecord[];
   anomalies: Anomaly[];
   selectedDetail: PriceDetail | null;
   board: BoardResult | null;
+  aiStatus: AiModelStatus | null;
+  aiBriefing: AiBriefing | null;
   recheckMap: Record<string, RecheckResult>;
   busyWorkOrderId: string | null;
   onSelectRecord: (id: string, anomalyId?: string) => void;
+  onSelectAnomaly: (anomalyId: string) => void;
   onAdvanceWorkOrder: (workOrder: WorkOrder) => void;
   onRecheckWorkOrder: (workOrder: WorkOrder) => void;
 }) {
@@ -31,6 +35,7 @@ export function Dashboard({ stats, records, anomalies, selectedDetail, board, re
           </div>
         </header>
         <KpiCards stats={stats} />
+        <AiBriefingPanel status={aiStatus} briefing={aiBriefing} onSelectAnomaly={onSelectAnomaly} />
         <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
           <PriceTable records={records} anomalies={anomalies} selectedId={selectedDetail?.id ?? null} onSelect={onSelectRecord} />
           <TrendChart detail={selectedDetail} />

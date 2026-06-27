@@ -3,7 +3,7 @@ import { AnomalyDetail } from "./components/AnomalyDetail";
 import { Dashboard } from "./components/Dashboard";
 import { getNextStatus } from "./components/KanbanBoard";
 import { api } from "./lib/api";
-import type { Anomaly, AnomalyDetail as Detail, BoardResult, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "./types";
+import type { AiBriefing, AiModelStatus, Anomaly, AnomalyDetail as Detail, BoardResult, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "./types";
 
 export default function App() {
   const [stats, setStats] = useState<StatsOverview | null>(null);
@@ -14,6 +14,8 @@ export default function App() {
   const [investigateResult, setInvestigateResult] = useState<InvestigateResult | null>(null);
   const [challengeResult, setChallengeResult] = useState<ChallengeResult | null>(null);
   const [board, setBoard] = useState<BoardResult | null>(null);
+  const [aiStatus, setAiStatus] = useState<AiModelStatus | null>(null);
+  const [aiBriefing, setAiBriefing] = useState<AiBriefing | null>(null);
   const [recheckMap, setRecheckMap] = useState<Record<string, RecheckResult>>({});
   const [busyWorkOrderId, setBusyWorkOrderId] = useState<string | null>(null);
   const [investigating, setInvestigating] = useState(false);
@@ -28,13 +30,17 @@ export default function App() {
         api.getPrices("?pageSize=12") as Promise<PageResult<PriceRecord>>,
         api.getAnomalies() as Promise<PageResult<Anomaly>>,
         api.getBoard() as Promise<BoardResult>,
+        api.getAiStatus() as Promise<AiModelStatus>,
+        api.getAiBriefing() as Promise<AiBriefing>,
       ]))
-      .then(async ([nextStats, pricePage, anomalyPage, nextBoard]) => {
+      .then(async ([nextStats, pricePage, anomalyPage, nextBoard, nextAiStatus, nextAiBriefing]) => {
         if (!active) return;
         setStats(nextStats);
         setRecords(pricePage.items);
         setAnomalies(anomalyPage.items);
         setBoard(nextBoard);
+        setAiStatus(nextAiStatus);
+        setAiBriefing(nextAiBriefing);
         if (pricePage.items[0]) {
           const detail = await api.getPrice(pricePage.items[0].id) as PriceDetail;
           if (active) setSelectedDetail(detail);
@@ -59,6 +65,11 @@ export default function App() {
         .then(detail => setSelectedAnomaly(detail as Detail))
         .catch((err: Error) => setError(err.message));
     }
+  };
+
+  const selectAnomaly = (anomalyId: string) => {
+    const anomaly = anomalies.find(item => item.id === anomalyId);
+    if (anomaly) selectRecord(anomaly.recordId, anomaly.id);
   };
 
   const investigateSelected = () => {
@@ -134,9 +145,12 @@ export default function App() {
         anomalies={anomalies}
         selectedDetail={selectedDetail}
         board={board}
+        aiStatus={aiStatus}
+        aiBriefing={aiBriefing}
         recheckMap={recheckMap}
         busyWorkOrderId={busyWorkOrderId}
         onSelectRecord={selectRecord}
+        onSelectAnomaly={selectAnomaly}
         onAdvanceWorkOrder={advanceWorkOrder}
         onRecheckWorkOrder={recheckWorkOrder}
       />
