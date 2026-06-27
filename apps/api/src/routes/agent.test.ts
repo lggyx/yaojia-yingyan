@@ -13,7 +13,7 @@ const SEL = `SELECT id,mi_code miCode,generic,brand,manufacturer,spec,form,categ
   listing_price listingPrice,hospital,region,date FROM price_records`;
 
 function setupApp() {
-  process.env.DB_PATH = "data/agent-routes.test.sqlite";
+  process.env.DB_PATH = `data/agent-routes-${crypto.randomUUID()}.test.sqlite`;
   rmSync(process.env.DB_PATH, { force: true });
   const db = getDb();
   seedDb(db);
@@ -68,6 +68,28 @@ describe("agent routes", () => {
       previous.model === undefined ? delete process.env.LLM_MODEL : process.env.LLM_MODEL = previous.model;
       previous.mock === undefined ? delete process.env.MOCK_LLM : process.env.MOCK_LLM = previous.mock;
     }
+  });
+
+  test("agent briefing summarizes the highest priority anomalies with auditable steps", async () => {
+    const { app } = setupApp();
+
+    const response = await app.request("/api/agent/briefing");
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.code).toBe(0);
+    expect(json.data.summary).toContain("1");
+    expect(json.data.priorities[0]).toMatchObject({
+      anomalyId: "A-S1",
+      level: "high",
+      target: "investigate",
+    });
+    expect(json.data.actions[0]).toMatchObject({
+      label: "生成 AI 研判报告",
+      target: "investigate",
+      anomalyId: "A-S1",
+    });
+    expect(json.data.reasoningSteps.map((step: any) => step.phase)).toEqual(["collect", "rank", "recommend"]);
   });
 
   test("repeated investigate and challenge calls record traces without 500", async () => {

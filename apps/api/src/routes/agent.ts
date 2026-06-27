@@ -3,6 +3,7 @@ import { getDb } from "../db/client";
 import { investigate } from "../agent/orchestrator";
 import { challenge } from "../agent/challenge";
 import { getLlmStatus } from "../agent/llm";
+import { generateBriefing } from "../agent/briefing";
 import { standardize } from "../standardize/standardize";
 import type { Anomaly, PriceRecord } from "@shared/types";
 
@@ -25,6 +26,11 @@ function saveTrace(db: any, anomalyId: string, kind: string, payload: unknown) {
 }
 
 r.get("/agent/status", (c) => c.json(ok(getLlmStatus())));
+
+r.get("/agent/briefing", (c) => {
+  const db = getDb();
+  return c.json(ok(generateBriefing(db)));
+});
 
 r.post("/agent/investigate/:id", async (c) => {
   const db = getDb(); const x = loadAnomaly(db, c.req.param("id"));

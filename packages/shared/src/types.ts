@@ -48,3 +48,21 @@ export interface StatsOverview {
   byRisk: { high: number; mid: number; low: number };
   closedRate: number; dismissedCount: number;
 }
+export interface AiModelStatus {
+  mode: "mock" | "remote"; model: string; provider: "openai-compatible";
+  baseConfigured: boolean; keyConfigured: boolean;
+}
+export interface AiReasoningStep {
+  phase: "collect" | "rank" | "recommend"; title: string; detail: string;
+}
+export interface AiPriority {
+  anomalyId: string; recordId: string; title: string; level: RiskLevel;
+  riskScore: number; reason: string; target: "investigate" | "workorder" | "review";
+}
+export interface AiSuggestedAction {
+  label: string; target: "investigate" | "workorder" | "review"; anomalyId?: string;
+}
+export interface AiBriefing {
+  generatedAt: string; summary: string; priorities: AiPriority[];
+  actions: AiSuggestedAction[]; reasoningSteps: AiReasoningStep[];
+}
