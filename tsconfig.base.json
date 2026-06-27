@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", "module": "ESNext", "moduleResolution": "bundler",
+    "strict": true, "skipLibCheck": true, "esModuleInterop": true,
+    "jsx": "react-jsx", "types": ["bun-types"],
+    "paths": { "@shared/*": ["./packages/shared/src/*"] }, "baseUrl": "."
+  }
+}
