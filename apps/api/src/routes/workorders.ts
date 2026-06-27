@@ -4,12 +4,17 @@ import { getDb } from "../db/client";
 const r = new Hono();
 const ok = (data: unknown) => ({ code: 0, data, msg: "ok" });
 const TS = "2026-06-27T00:00:00.000Z";
+const nextStatus: Record<string, string> = { pending: "processing", processing: "done", done: "closed" };
 
 r.post("/work-orders", async (c) => {
   const db = getDb();
   const body = await c.req.json();
   const id = `WO-${body.anomalyId}`;
-  db.prepare(`INSERT OR REPLACE INTO work_orders
+  const anomaly = db.query("SELECT id FROM anomalies WHERE id=?").get(body.anomalyId);
+  if (!anomaly) return c.json({ code: 1, msg: "anomaly not found" }, 404);
+  const existing = db.query("SELECT id,status FROM work_orders WHERE anomaly_id=?").get(body.anomalyId);
+  if (existing) return c.json({ code: 1, msg: "work order already exists", data: existing }, 409);
+  db.prepare(`INSERT INTO work_orders
     (id,anomaly_id,type,status,assignee,sla,corrected_price,note,created_at,updated_at)
     VALUES (?,?,?,?,?,?,?,?,?,?)`)
     .run(id, body.anomalyId, body.type, "pending", body.assignee ?? null, body.sla ?? null, null, body.note ?? null, TS, TS);
@@ -43,6 +48,12 @@ r.patch("/work-orders/:id", async (c) => {
   const body = await c.req.json();
   const current = db.query("SELECT status FROM work_orders WHERE id=?").get(id) as { status: string } | null;
   if (!current) return c.json({ code: 1, msg: "not found" }, 404);
+  if (nextStatus[current.status] !== body.status) return c.json({ code: 1, msg: "invalid status transition" }, 400);
+  if (body.status === "closed") {
+    const passed = db.query(`SELECT 1 FROM work_order_events
+      WHERE work_order_id=? AND to_status='recheck_passed' ORDER BY created_at DESC LIMIT 1`).get(id);
+    if (!passed) return c.json({ code: 1, msg: "AI recheck required before closing" }, 400);
+  }
 
   db.prepare(`UPDATE work_orders SET status=?, corrected_price=COALESCE(?,corrected_price),
     note=COALESCE(?,note), updated_at=? WHERE id=?`)
@@ -69,6 +80,8 @@ r.post("/work-orders/:id/recheck", (c) => {
   const latestPrice = workOrder.correctedPrice ?? record.price;
   const deviationNow = record.tenderPrice ? +(latestPrice / record.tenderPrice).toFixed(2) : null;
   const corrected = deviationNow != null && deviationNow <= 1.5;
+  db.prepare("INSERT INTO work_order_events (id,work_order_id,from_status,to_status,note,created_at) VALUES (?,?,?,?,?,?)")
+    .run(`E-${id}-recheck-${crypto.randomUUID()}`, id, "done", corrected ? "recheck_passed" : "recheck_failed", `AI复核：${corrected ? "可闭环" : "需继续处置"}`, TS);
   return c.json(ok({ corrected, latestPrice, deviationNow, canClose: corrected }));
 });
 

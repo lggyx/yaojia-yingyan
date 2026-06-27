@@ -14,7 +14,7 @@ const SEL = `SELECT id,mi_code miCode,generic,brand,manufacturer,spec,form,categ
   listing_price listingPrice,hospital,region,date FROM price_records`;
 
 function setupApp() {
-  process.env.DB_PATH = "data/workorders.test.sqlite";
+  process.env.DB_PATH = `data/workorders-${crypto.randomUUID()}.test.sqlite`;
   rmSync(process.env.DB_PATH, { force: true });
   const db = getDb();
   seedDb(db);
@@ -59,20 +59,77 @@ describe("work order routes", () => {
     const notCorrected = await app.request("/api/work-orders/WO-A-S1/recheck", { method: "POST" });
     expect(await notCorrected.json()).toMatchObject({ code: 0, data: { corrected: false, canClose: false } });
 
-    const closed = await app.request("/api/work-orders/WO-A-S1", {
+    const done = await app.request("/api/work-orders/WO-A-S1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "closed", correctedPrice: 6.6, note: "价格已修正" }),
+      body: JSON.stringify({ status: "done", correctedPrice: 6.6, note: "价格已修正" }),
     });
-    expect(closed.status).toBe(200);
-    expect(db.query("SELECT status FROM anomalies WHERE id='A-S1'").get()).toEqual({ status: "closed" });
+    expect(done.status).toBe(200);
 
     const recheck = await app.request("/api/work-orders/WO-A-S1/recheck", { method: "POST" });
     expect(await recheck.json()).toMatchObject({ code: 0, data: { corrected: true, latestPrice: 6.6, canClose: true } });
+
+    const closed = await app.request("/api/work-orders/WO-A-S1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "closed", note: "AI复核通过，归档" }),
+    });
+    expect(closed.status).toBe(200);
+    expect(db.query("SELECT status FROM anomalies WHERE id='A-S1'").get()).toEqual({ status: "closed" });
 
     const boardRes = await app.request("/api/board");
     const boardJson = await boardRes.json();
     expect(boardJson.data.columns.find((col: any) => col.status === "closed").cards)
       .toContainEqual(expect.objectContaining({ id: "WO-A-S1", status: "closed" }));
+  });
+
+  test("rejects missing anomalies, duplicate work orders, invalid transitions, and unverified closure", async () => {
+    const { app } = setupApp();
+
+    const missing = await app.request("/api/work-orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ anomalyId: "A-MISSING", type: "inquiry" }),
+    });
+    expect(missing.status).toBe(404);
+
+    const created = await app.request("/api/work-orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ anomalyId: "A-S1", type: "inquiry" }),
+    });
+    expect(created.status).toBe(200);
+
+    const duplicate = await app.request("/api/work-orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ anomalyId: "A-S1", type: "inquiry" }),
+    });
+    expect(duplicate.status).toBe(409);
+
+    const directClose = await app.request("/api/work-orders/WO-A-S1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "closed" }),
+    });
+    expect(directClose.status).toBe(400);
+
+    await app.request("/api/work-orders/WO-A-S1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "processing" }),
+    });
+    await app.request("/api/work-orders/WO-A-S1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "done" }),
+    });
+
+    const unverifiedClose = await app.request("/api/work-orders/WO-A-S1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "closed" }),
+    });
+    expect(unverifiedClose.status).toBe(400);
   });
 });
