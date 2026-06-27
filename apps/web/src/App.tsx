@@ -3,7 +3,7 @@ import { AnomalyDetail } from "./components/AnomalyDetail";
 import { Dashboard } from "./components/Dashboard";
 import { getNextStatus } from "./components/KanbanBoard";
 import { api } from "./lib/api";
-import type { AiBriefing, AiModelStatus, Anomaly, AnomalyDetail as Detail, BoardResult, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "./types";
+import type { AiBriefing, AiInvestigationReport, AiModelStatus, Anomaly, AnomalyDetail as Detail, BoardResult, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, RecheckResult, StatsOverview, WorkOrder } from "./types";
 
 export default function App() {
   const [stats, setStats] = useState<StatsOverview | null>(null);
@@ -13,6 +13,7 @@ export default function App() {
   const [selectedAnomaly, setSelectedAnomaly] = useState<Detail | null>(null);
   const [investigateResult, setInvestigateResult] = useState<InvestigateResult | null>(null);
   const [challengeResult, setChallengeResult] = useState<ChallengeResult | null>(null);
+  const [aiReport, setAiReport] = useState<AiInvestigationReport | null>(null);
   const [board, setBoard] = useState<BoardResult | null>(null);
   const [aiStatus, setAiStatus] = useState<AiModelStatus | null>(null);
   const [aiBriefing, setAiBriefing] = useState<AiBriefing | null>(null);
@@ -20,6 +21,7 @@ export default function App() {
   const [busyWorkOrderId, setBusyWorkOrderId] = useState<string | null>(null);
   const [investigating, setInvestigating] = useState(false);
   const [challenging, setChallenging] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export default function App() {
     if (anomalyId) {
       setInvestigateResult(null);
       setChallengeResult(null);
+      setAiReport(null);
       api.getAnomaly(anomalyId)
         .then(detail => setSelectedAnomaly(detail as Detail))
         .catch((err: Error) => setError(err.message));
@@ -79,6 +82,20 @@ export default function App() {
       .then(result => setInvestigateResult(result as InvestigateResult))
       .catch((err: Error) => setError(err.message))
       .finally(() => setInvestigating(false));
+  };
+
+  const reportSelected = () => {
+    if (!selectedAnomaly) return;
+    setReporting(true);
+    api.getAiReport(selectedAnomaly.id)
+      .then(result => {
+        const report = result as AiInvestigationReport;
+        setAiReport(report);
+        setInvestigateResult(report.investigation);
+        setChallengeResult(report.challenge);
+      })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setReporting(false));
   };
 
   const challengeSelected = () => {
@@ -158,11 +175,14 @@ export default function App() {
         detail={selectedAnomaly}
         investigating={investigating}
         challenging={challenging}
+        reporting={reporting}
         investigateResult={investigateResult}
         challengeResult={challengeResult}
+        aiReport={aiReport}
         onClose={() => setSelectedAnomaly(null)}
         onInvestigate={investigateSelected}
         onChallenge={challengeSelected}
+        onReport={reportSelected}
       />
     </>
   );
