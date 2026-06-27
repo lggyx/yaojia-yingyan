@@ -20,7 +20,7 @@ function loadAnomaly(db: any, id: string): { anomaly: Anomaly; record: PriceReco
 }
 function saveTrace(db: any, anomalyId: string, kind: string, payload: unknown) {
   db.prepare("INSERT INTO agent_traces (id,anomaly_id,kind,payload,created_at) VALUES (?,?,?,?,?)")
-    .run(`T-${kind}-${anomalyId}`, anomalyId, kind, JSON.stringify(payload), new Date(0).toISOString());
+    .run(`T-${kind}-${anomalyId}-${crypto.randomUUID()}`, anomalyId, kind, JSON.stringify(payload), new Date().toISOString());
 }
 
 r.post("/agent/investigate/:id", async (c) => {
