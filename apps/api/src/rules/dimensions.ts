@@ -16,11 +16,11 @@ export function historyDim(r: PriceRecord, hist: PriceHistoryPoint[], t: Thresho
   const last = series[series.length-1].price;
   const mom = (last - avg) / avg;
   return { type: "history", base: +avg.toFixed(2), actual: last, deviation: +mom.toFixed(3),
-    hit: mom > t.historyMoM, detail: `环比历史均值 +${(mom*100).toFixed(0)}%` };
+    hit: mom > t.historyMoM, detail: `环比历史均值 ${mom >= 0 ? "+" : ""}${(mom*100).toFixed(0)}%` };
 }
 
 export function regionalDim(r: PriceRecord, peers: PriceRecord[], t: Thresholds): DimensionResult | null {
-  const others = peers.filter(p => p.generic === r.generic && p.manufacturer === r.manufacturer);
+  const others = peers.filter(p => p.id !== r.id && p.region !== r.region && p.generic === r.generic && p.manufacturer === r.manufacturer);
   if (others.length === 0) return null;
   const avg = others.reduce((s,p)=>s+p.price,0) / others.length;
   if (avg <= 0) return null;

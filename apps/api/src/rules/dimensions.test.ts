@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { tenderDim, historyDim, regionalDim, volumeDim } from "./dimensions";
+import { tenderDim, historyDim, regionalDim, volumeDim, alternativeDim } from "./dimensions";
 import { DEFAULT_THRESHOLDS as T } from "@shared/constants";
 import type { PriceRecord } from "@shared/types";
 
@@ -24,7 +24,20 @@ test("volumeDim 命中: 完成率 < 60%", () => {
   expect(d.hit).toBe(true); expect(d.deviation).toBeCloseTo(0.3);
 });
 test("regionalDim 命中: 偏离同厂家周边均价 > 50%", () => {
-  const peers: PriceRecord[] = [{...base, region:"江苏省", price:5},{...base, region:"安徽省", price:5}];
+  const peers: PriceRecord[] = [
+    { ...base, id:"peer1", region:"江苏省", price:5 },
+    { ...base, id:"peer2", region:"安徽省", price:5 },
+  ];
   const d = regionalDim({ ...base, price: 10 }, peers, T)!;
   expect(d.hit).toBe(true);
+});
+test("alternativeDim 命中: 中选药被高价替代药挤占", () => {
+  const sel = { ...base, id:"sel", generic:"二甲双胍", tenderPrice:5, price:5, actualVolume:30 };
+  const alt = { ...base, id:"alt", generic:"二甲双胍", tenderPrice:null, price:12, actualVolume:70 };
+  const d = alternativeDim(sel, [sel, alt])!;
+  expect(d.type).toBe("alternative");
+  expect(d.hit).toBe(true);
+});
+test("alternativeDim 无替代药→null", () => {
+  expect(alternativeDim({ ...base, tenderPrice:5 }, [{ ...base, tenderPrice:5 }])).toBeNull();
 });
