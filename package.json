@@ -1,0 +1,13 @@
+{
+  "name": "yaojia-yingyan",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1",
+    "dev:api": "bun run --cwd apps/api dev",
+    "dev:web": "bun run --cwd apps/web dev",
+    "seed": "bun run --cwd apps/api seed",
+    "build:web": "bun run --cwd apps/web build",
+    "test": "bun test"
+  }
+}
