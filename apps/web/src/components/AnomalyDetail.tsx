@@ -10,11 +10,12 @@ const phaseLabels: Record<string, string> = {
   conclude: "结论",
 };
 
-export function AnomalyDetail({ detail, investigating, challenging, reporting, investigateResult, challengeResult, aiReport, onClose, onInvestigate, onChallenge, onReport }: {
+export function AnomalyDetail({ detail, investigating, challenging, reporting, creatingWorkOrder, investigateResult, challengeResult, aiReport, onClose, onInvestigate, onChallenge, onReport, onCreateWorkOrder }: {
   detail: Detail | null;
   investigating: boolean;
   challenging: boolean;
   reporting: boolean;
+  creatingWorkOrder: boolean;
   investigateResult: InvestigateResult | null;
   challengeResult: ChallengeResult | null;
   aiReport: AiInvestigationReport | null;
@@ -22,6 +23,7 @@ export function AnomalyDetail({ detail, investigating, challenging, reporting, i
   onInvestigate: () => void;
   onChallenge: () => void;
   onReport: () => void;
+  onCreateWorkOrder: () => void;
 }) {
   if (!detail) return null;
 
@@ -91,6 +93,9 @@ export function AnomalyDetail({ detail, investigating, challenging, reporting, i
                 <span key={`${action.target}-${action.label}`} className="rounded border border-sentinel-line bg-[#f6faf7] px-2 py-1 text-xs text-[#40564d]">{action.label}</span>
               ))}
             </div>
+            <button className="mt-4 rounded bg-sentinel-ink px-3 py-2 text-sm text-white disabled:opacity-50" disabled={creatingWorkOrder} onClick={onCreateWorkOrder}>
+              {creatingWorkOrder ? "创建中" : "按 AI 建议创建工单"}
+            </button>
           </section>
         ) : null}
         <section>

@@ -19,6 +19,7 @@ export default function App() {
   const [aiBriefing, setAiBriefing] = useState<AiBriefing | null>(null);
   const [recheckMap, setRecheckMap] = useState<Record<string, RecheckResult>>({});
   const [busyWorkOrderId, setBusyWorkOrderId] = useState<string | null>(null);
+  const [creatingWorkOrder, setCreatingWorkOrder] = useState(false);
   const [investigating, setInvestigating] = useState(false);
   const [challenging, setChallenging] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -109,6 +110,20 @@ export default function App() {
 
   const refreshBoard = () => api.getBoard().then(nextBoard => setBoard(nextBoard as BoardResult));
 
+  const createWorkOrderFromReport = () => {
+    if (!selectedAnomaly || !aiReport) return;
+    setCreatingWorkOrder(true);
+    api.createWorkOrder({
+      anomalyId: selectedAnomaly.id,
+      type: aiReport.conclusion.suggestedDisposition,
+      assignee: "监管一组",
+      note: `AI研判：${aiReport.conclusion.summary}`,
+    })
+      .then(refreshBoard)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setCreatingWorkOrder(false));
+  };
+
   const advanceWorkOrder = (workOrder: WorkOrder) => {
     const status = getNextStatus(workOrder.status);
     setBusyWorkOrderId(workOrder.id);
@@ -176,6 +191,7 @@ export default function App() {
         investigating={investigating}
         challenging={challenging}
         reporting={reporting}
+        creatingWorkOrder={creatingWorkOrder}
         investigateResult={investigateResult}
         challengeResult={challengeResult}
         aiReport={aiReport}
@@ -183,6 +199,7 @@ export default function App() {
         onInvestigate={investigateSelected}
         onChallenge={challengeSelected}
         onReport={reportSelected}
+        onCreateWorkOrder={createWorkOrderFromReport}
       />
     </>
   );

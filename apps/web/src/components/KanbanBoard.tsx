@@ -51,15 +51,24 @@ export function KanbanBoard({ board, recheckMap, busyId, onAdvance, onRecheck }:
                     </div>
                     <span className="rounded border border-sentinel-line px-2 py-1 text-[11px] text-[#60746b]">{card.assignee ?? "未分派"}</span>
                   </div>
-                  {card.note ? <p className="mt-3 leading-6 text-[#60746b]">{card.note}</p> : null}
+                  <div className="mt-3 rounded border border-sentinel-line bg-[#fbfcfb] p-2 text-xs leading-5 text-[#40564d]">
+                    <div className="font-semibold text-sentinel-ink">{card.generic ?? card.id}</div>
+                    <div>{card.hospital ?? "未知机构"} · {card.region ?? "未知地区"}</div>
+                    <div className="mt-1">风险 {card.riskLevel?.toUpperCase() ?? "-"} · {card.riskScore ?? "-"} 分</div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-2 rounded border border-sentinel-line bg-[#f6faf7] p-2 text-xs text-[#40564d]">
+                    <span>{card.currentStep ?? columnNames[card.status]} → {card.nextStep ?? "等待操作"}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#60746b]">Flow</span>
+                  </div>
+                  {card.lastEvent ?? card.note ? <p className="mt-3 leading-6 text-[#60746b]">{card.lastEvent ?? card.note}</p> : null}
                   {recheckMap[card.id] ? <RecheckSummary result={recheckMap[card.id]} /> : null}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {nextStatus[card.status] ? (
-                      <button className="rounded bg-sentinel-ink px-2.5 py-1.5 text-xs text-white disabled:opacity-50" disabled={busyId === card.id} onClick={() => onAdvance(card)}>
-                        推进
+                      <button className="rounded bg-sentinel-ink px-2.5 py-1.5 text-xs text-white disabled:opacity-50" disabled={busyId === card.id || (card.status === "done" && !recheckMap[card.id]?.canClose)} onClick={() => onAdvance(card)}>
+                        {card.status === "done" ? "闭环" : "推进"}
                       </button>
                     ) : null}
-                    <button className="rounded border border-sentinel-line px-2.5 py-1.5 text-xs hover:bg-[#eef3ef] disabled:opacity-50" disabled={busyId === card.id} onClick={() => onRecheck(card)}>
+                    <button className="rounded border border-sentinel-line px-2.5 py-1.5 text-xs hover:bg-[#eef3ef] disabled:opacity-50" disabled={busyId === card.id || card.status !== "done"} onClick={() => onRecheck(card)}>
                       复核
                     </button>
                   </div>
