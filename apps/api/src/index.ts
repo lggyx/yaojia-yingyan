@@ -12,7 +12,12 @@ const db = getDb();
 if ((db.query("SELECT COUNT(*) c FROM price_records").get() as { c: number }).c === 0) seedDb(db);
 
 const app = new Hono();
-app.use("*", cors());
+app.use("*", cors({
+	origin: "*",
+	allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+	allowHeaders: ["Content-Type", "Authorization"],
+	maxAge: 86400,
+}));
 app.get("/health", (c) => c.json({ code: 0, msg: "ok" }));
 app.route("/api", prices);
 app.route("/api", anomalies);
