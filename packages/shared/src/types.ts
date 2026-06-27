@@ -53,7 +53,7 @@ export interface AiModelStatus {
   baseConfigured: boolean; keyConfigured: boolean;
 }
 export interface AiReasoningStep {
-  phase: "collect" | "rank" | "recommend"; title: string; detail: string;
+  phase: "collect" | "rank" | "recommend" | "challenge" | "conclude"; title: string; detail: string;
 }
 export interface AiPriority {
   anomalyId: string; recordId: string; title: string; level: RiskLevel;
@@ -65,4 +65,10 @@ export interface AiSuggestedAction {
 export interface AiBriefing {
   generatedAt: string; summary: string; priorities: AiPriority[];
   actions: AiSuggestedAction[]; reasoningSteps: AiReasoningStep[];
+}
+export interface AiInvestigationReport {
+  anomalyId: string; recordId: string; generatedAt: string;
+  investigation: InvestigateResult; challenge: ChallengeResult;
+  conclusion: { verdict: ChallengeResult["verdict"]; riskLevel: RiskLevel; confidence: number; suggestedDisposition: WorkOrderType; summary: string };
+  reasoningSteps: AiReasoningStep[]; nextActions: AiSuggestedAction[];
 }

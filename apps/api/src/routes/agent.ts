@@ -4,6 +4,7 @@ import { investigate } from "../agent/orchestrator";
 import { challenge } from "../agent/challenge";
 import { getLlmStatus } from "../agent/llm";
 import { generateBriefing } from "../agent/briefing";
+import { generateReport } from "../agent/report";
 import { standardize } from "../standardize/standardize";
 import type { Anomaly, PriceRecord } from "@shared/types";
 
@@ -30,6 +31,14 @@ r.get("/agent/status", (c) => c.json(ok(getLlmStatus())));
 r.get("/agent/briefing", (c) => {
   const db = getDb();
   return c.json(ok(generateBriefing(db)));
+});
+
+r.post("/agent/report/:id", async (c) => {
+  const db = getDb(); const x = loadAnomaly(db, c.req.param("id"));
+  if (!x) return c.json({ code: 1, msg: "not found" }, 404);
+  const result = await generateReport(db, x.anomaly, x.record);
+  saveTrace(db, x.anomaly.id, "report", result);
+  return c.json(ok(result));
 });
 
 r.post("/agent/investigate/:id", async (c) => {

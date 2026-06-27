@@ -92,6 +92,29 @@ describe("agent routes", () => {
     expect(json.data.reasoningSteps.map((step: any) => step.phase)).toEqual(["collect", "rank", "recommend"]);
   });
 
+  test("agent report combines investigation, red-team challenge, and next actions", async () => {
+    const { app, db } = setupApp();
+
+    const response = await app.request("/api/agent/report/A-S1", { method: "POST" });
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.code).toBe(0);
+    expect(json.data).toMatchObject({
+      anomalyId: "A-S1",
+      conclusion: {
+        verdict: "confirmed",
+        riskLevel: "high",
+        suggestedDisposition: "inquiry",
+      },
+    });
+    expect(json.data.investigation.trace.length).toBeGreaterThan(0);
+    expect(json.data.challenge.rebuttals.length).toBeGreaterThan(0);
+    expect(json.data.reasoningSteps.map((step: any) => step.phase)).toEqual(["collect", "challenge", "conclude"]);
+    expect(json.data.nextActions[0]).toMatchObject({ label: "创建处置工单", target: "workorder" });
+    expect(db.query("SELECT COUNT(*) count FROM agent_traces WHERE anomaly_id='A-S1' AND kind='report'").get()).toEqual({ count: 1 });
+  });
+
   test("repeated investigate and challenge calls record traces without 500", async () => {
     const { app, db } = setupApp();
 
