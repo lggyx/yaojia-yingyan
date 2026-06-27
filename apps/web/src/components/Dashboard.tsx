@@ -8,7 +8,7 @@ export function Dashboard({ stats, records, anomalies, selectedDetail, onSelectR
   records: PriceRecord[];
   anomalies: Anomaly[];
   selectedDetail: PriceDetail | null;
-  onSelectRecord: (id: string) => void;
+  onSelectRecord: (id: string, anomalyId?: string) => void;
 }) {
   return (
     <main className="min-h-[100dvh] px-4 py-4 text-sentinel-ink md:px-8 md:py-6">

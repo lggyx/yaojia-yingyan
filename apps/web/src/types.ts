@@ -49,6 +49,38 @@ export interface Anomaly {
   createdAt: string;
 }
 
+export interface AnomalyDetail extends Anomaly {
+  record: PriceRecord;
+}
+
+export interface TraceStep {
+  step: number;
+  tool: string;
+  input: unknown;
+  output: unknown;
+}
+
+export interface InvestigateResult {
+  trace: TraceStep[];
+  evidence: Record<string, unknown>;
+  explanation: string;
+  suggestedDisposition: string;
+}
+
+export interface Rebuttal {
+  hypothesis: string;
+  checked: boolean;
+  refuted: boolean;
+  reason: string;
+}
+
+export interface ChallengeResult {
+  rebuttals: Rebuttal[];
+  confidence: number;
+  adjustedRiskLevel: "high" | "mid" | "low";
+  verdict: "confirmed" | "review" | "dismissed";
+}
+
 export interface PageResult<T> {
   items: T[];
   total: number;

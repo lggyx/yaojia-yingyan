@@ -6,7 +6,7 @@ export function PriceTable({ records, anomalies, selectedId, onSelect }: {
   records: PriceRecord[];
   anomalies: Anomaly[];
   selectedId: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, anomalyId?: string) => void;
 }) {
   const byRecord = new Map(anomalies.map(item => [item.recordId, item]));
 
@@ -36,7 +36,7 @@ export function PriceTable({ records, anomalies, selectedId, onSelect }: {
                 <tr
                   key={record.id}
                   className={active ? "cursor-pointer bg-[#f8e8e4]" : "cursor-pointer border-t border-[#e3ebe6] hover:bg-[#f5f8f6]"}
-                  onClick={() => onSelect(record.id)}
+                  onClick={() => onSelect(record.id, anomaly?.id)}
                 >
                   <Td>
                     <div className="font-medium">{record.generic}</div>
@@ -45,7 +45,9 @@ export function PriceTable({ records, anomalies, selectedId, onSelect }: {
                   <Td>{record.hospital}<div className="mt-1 text-xs text-[#60746b]">{record.region}</div></Td>
                   <Td>¥{record.price.toFixed(2)}</Td>
                   <Td>{record.tenderPrice == null ? "-" : `¥${record.tenderPrice.toFixed(2)}`}</Td>
-                  <Td>{anomaly ? <RiskBadge level={anomaly.riskLevel} /> : <span className="text-[#60746b]">正常</span>}</Td>
+                  <Td>
+                    {anomaly ? <div className="grid gap-1"><RiskBadge level={anomaly.riskLevel} /><span className="text-xs text-sentinel-risk">查看异常</span></div> : <span className="text-[#60746b]">正常</span>}
+                  </Td>
                   <Td>{record.date}</Td>
                 </tr>
               );

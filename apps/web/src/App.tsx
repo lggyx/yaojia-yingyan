@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
+import { AnomalyDetail } from "./components/AnomalyDetail";
 import { Dashboard } from "./components/Dashboard";
 import { api } from "./lib/api";
-import type { Anomaly, PageResult, PriceDetail, PriceRecord, StatsOverview } from "./types";
+import type { Anomaly, AnomalyDetail as Detail, ChallengeResult, InvestigateResult, PageResult, PriceDetail, PriceRecord, StatsOverview } from "./types";
 
 export default function App() {
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [records, setRecords] = useState<PriceRecord[]>([]);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [selectedDetail, setSelectedDetail] = useState<PriceDetail | null>(null);
+  const [selectedAnomaly, setSelectedAnomaly] = useState<Detail | null>(null);
+  const [investigateResult, setInvestigateResult] = useState<InvestigateResult | null>(null);
+  const [challengeResult, setChallengeResult] = useState<ChallengeResult | null>(null);
+  const [investigating, setInvestigating] = useState(false);
+  const [challenging, setChallenging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,10 +42,35 @@ export default function App() {
     };
   }, []);
 
-  const selectRecord = (id: string) => {
+  const selectRecord = (id: string, anomalyId?: string) => {
     api.getPrice(id)
       .then(detail => setSelectedDetail(detail as PriceDetail))
       .catch((err: Error) => setError(err.message));
+    if (anomalyId) {
+      setInvestigateResult(null);
+      setChallengeResult(null);
+      api.getAnomaly(anomalyId)
+        .then(detail => setSelectedAnomaly(detail as Detail))
+        .catch((err: Error) => setError(err.message));
+    }
+  };
+
+  const investigateSelected = () => {
+    if (!selectedAnomaly) return;
+    setInvestigating(true);
+    api.investigate(selectedAnomaly.id)
+      .then(result => setInvestigateResult(result as InvestigateResult))
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setInvestigating(false));
+  };
+
+  const challengeSelected = () => {
+    if (!selectedAnomaly) return;
+    setChallenging(true);
+    api.challenge(selectedAnomaly.id)
+      .then(result => setChallengeResult(result as ChallengeResult))
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setChallenging(false));
   };
 
   if (error) {
@@ -68,12 +99,24 @@ export default function App() {
   }
 
   return (
-    <Dashboard
-      stats={stats}
-      records={records}
-      anomalies={anomalies}
-      selectedDetail={selectedDetail}
-      onSelectRecord={selectRecord}
-    />
+    <>
+      <Dashboard
+        stats={stats}
+        records={records}
+        anomalies={anomalies}
+        selectedDetail={selectedDetail}
+        onSelectRecord={selectRecord}
+      />
+      <AnomalyDetail
+        detail={selectedAnomaly}
+        investigating={investigating}
+        challenging={challenging}
+        investigateResult={investigateResult}
+        challengeResult={challengeResult}
+        onClose={() => setSelectedAnomaly(null)}
+        onInvestigate={investigateSelected}
+        onChallenge={challengeSelected}
+      />
+    </>
   );
 }
