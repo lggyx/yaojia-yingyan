@@ -21,12 +21,12 @@ export async function investigate(db: Database, anomaly: Anomaly, record: PriceR
     evidence.alternatives = run("get_alternatives", { generic: record.generic }, getAlternatives(db, record));
 
   const dimText = anomaly.dimensions.filter(d => d.hit).map(d => `- ${d.detail}`).join("\n");
-  const explanation = await chat(
+  const explanationResult = await chat(
     "你是医保医药价格治理分析专家，依据给定的结构化证据，用简洁专业中文解释该价格为何异常、风险等级与建议处置，不得编造证据外信息。",
     `品种：${record.generic}（${record.brand}，${record.manufacturer}，${record.spec}）\n地区/医院：${record.region}/${record.hospital}\n命中维度：\n${dimText}\n风险初判：${anomaly.riskLevel}`);
 
   const suggestedDisposition: WorkOrderType =
     anomaly.riskLevel === "high" ? "inquiry" : anomaly.riskLevel === "mid" ? "interview" : "remind";
 
-  return { trace, evidence, explanation, suggestedDisposition };
+  return { trace, evidence, explanation: explanationResult.content, suggestedDisposition, usedMock: explanationResult.usedMock };
 }

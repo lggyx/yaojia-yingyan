@@ -214,7 +214,8 @@ ${context}`;
   try {
     // Call LLM via chat()
     const userPrompt = messages.filter(m => m.role !== "system").map(m => `[${m.role}]: ${m.content}`).join("\n");
-    const answer = await chat(systemPrompt, userPrompt);
+    const chatResult = await chat(systemPrompt, userPrompt);
+    const answer = chatResult.content;
 
     // Generate citations
     const citations: Array<{ type: string; id: string; label: string }> = [];
@@ -284,6 +285,7 @@ ${context}`;
       citations,
       suggestedTasks,
       suggestedLinks,
+      usedMock: chatResult.usedMock ?? getLlmStatus().mode === "mock",
     }));
   } catch (err: any) {
     return c.json(ok({

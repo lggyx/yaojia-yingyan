@@ -39,9 +39,9 @@ function buildRebuttals(anomaly: Anomaly, record: PriceRecord): Rebuttal[] {
 export async function challenge(db: Database, anomaly: Anomaly, record: PriceRecord): Promise<ChallengeResult> {
   const rebuttals = buildRebuttals(anomaly, record);
   // 让 LLM 以红队口吻复述（兜底有模板），不改变规则判定
-  await chat("你是医保价格监管红队，专门尝试反驳价格异常是否其实合理。",
+  const chatResult = await chat("你是医保价格监管红队，专门尝试反驳价格异常是否其实合理。",
     `品种：${record.generic} ${record.spec}；逐条检验：${rebuttals.map(r => r.hypothesis).join("、")}`);
   const confidence = computeConfidence(rebuttals);
   const verdict = verdictFromConfidence(confidence);
-  return { rebuttals, confidence, verdict, adjustedRiskLevel: adjustRisk(anomaly.riskLevel, verdict) };
+  return { rebuttals, confidence, verdict, adjustedRiskLevel: adjustRisk(anomaly.riskLevel, verdict), usedMock: chatResult.usedMock };
 }

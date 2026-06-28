@@ -65,6 +65,7 @@ export interface InvestigateResult {
   evidence: Record<string, unknown>;
   explanation: string;
   suggestedDisposition: string;
+  usedMock?: boolean;
 }
 
 export interface Rebuttal {
@@ -79,6 +80,7 @@ export interface ChallengeResult {
   confidence: number;
   adjustedRiskLevel: "high" | "mid" | "low";
   verdict: "confirmed" | "review" | "dismissed";
+  usedMock?: boolean;
 }
 
 export interface AiModelStatus {
@@ -220,6 +222,7 @@ export interface CopilotChatResponse {
   citations: Array<{ type: string; id: string; label: string }>;
   suggestedTasks: TaskItem[];
   suggestedLinks: SuggestedLink[];
+  usedMock?: boolean;
 }
 
 export interface RuleConfig {

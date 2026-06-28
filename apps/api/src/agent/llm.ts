@@ -18,9 +18,9 @@ export function getLlmStatus(): LlmStatus {
   };
 }
 
-export async function chat(system: string, user: string): Promise<string> {
+export async function chat(system: string, user: string): Promise<{ content: string; usedMock: boolean }> {
   const base = process.env.LLM_BASE_URL;
-  if (process.env.MOCK_LLM === "1" || !base) return mockReply(system, user);
+  if (process.env.MOCK_LLM === "1" || !base) return { content: mockReply(system, user), usedMock: true };
   const timeoutMs = Number(process.env.LLM_TIMEOUT_MS ?? 8000);
   try {
     const res = await fetch(`${base}/v1/chat/completions`, {
@@ -32,8 +32,10 @@ export async function chat(system: string, user: string): Promise<string> {
         temperature: 0.2, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
     });
     const json: any = await res.json();
-    return json?.choices?.[0]?.message?.content ?? mockReply(system, user);
-  } catch { return mockReply(system, user); }
+    const content = json?.choices?.[0]?.message?.content;
+    if (content) return { content, usedMock: false };
+    return { content: mockReply(system, user), usedMock: true };
+  } catch { return { content: mockReply(system, user), usedMock: true }; }
 }
 function mockReply(system: string, user: string): string {
   if (system.includes("红队") || system.includes("反驳"))

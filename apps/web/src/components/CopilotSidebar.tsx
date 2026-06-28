@@ -23,6 +23,7 @@ export function CopilotSidebar({
   const [citations, setCitations] = useState<Citation[]>([]);
   const [suggestedTasks, setSuggestedTasks] = useState<TaskItem[]>([]);
   const [suggestedLinks, setSuggestedLinks] = useState<SuggestedLink[]>([]);
+  const [lastUsedMock, setLastUsedMock] = useState<boolean | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,6 +83,7 @@ export function CopilotSidebar({
       setCitations(res.citations ?? []);
       setSuggestedTasks(res.suggestedTasks ?? []);
       setSuggestedLinks(res.suggestedLinks ?? []);
+      setLastUsedMock(res.usedMock ?? null);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "抱歉，暂时无法回应，请稍后重试。" }]);
     } finally {
@@ -140,6 +142,21 @@ export function CopilotSidebar({
               <h2 className="text-base font-semibold text-sentinel-ink">AI 助手</h2>
               <p className="mt-0.5 text-xs text-[#60746b]">药价鹰眼智能调度</p>
             </div>
+            {lastUsedMock !== null && (
+              <div className="self-start">
+                {lastUsedMock ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#92400e]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#92400e]" />
+                    模拟
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#d1f0e1] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1a5c3a]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#1a5c3a]" />
+                    AI 在线
+                  </span>
+                )}
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setOpen(false)}

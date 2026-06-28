@@ -33,7 +33,21 @@ export function AiBriefingPanel({ status, briefing, onSelectAnomaly }: {
           <div className="rounded-md border border-sentinel-line bg-[#f6faf7] px-3 py-2 text-xs text-[#41534b]">
             <div className="font-mono uppercase tracking-[0.16em] text-[#60746b]">Model</div>
             <div className="mt-1 font-semibold text-sentinel-ink">{modelText}</div>
-            {status ? <div className="mt-1">Base {status.baseConfigured ? "已配置" : "未配置"} · Key {status.keyConfigured ? "已配置" : "未配置"}</div> : null}
+            {status ? (
+              <div className="mt-2 flex items-center gap-1">
+                {status.mode === "remote" ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#d1f0e1] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1a5c3a]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#1a5c3a]" />
+                    真实 AI
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#92400e]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#92400e]" />
+                    模拟数据
+                  </span>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 

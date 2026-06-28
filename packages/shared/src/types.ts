@@ -28,12 +28,12 @@ export interface Thresholds { tenderRatio: number; historyMoM: number; regionalD
 export interface Rebuttal { hypothesis: string; checked: boolean; refuted: boolean; reason: string; }
 export interface ChallengeResult {
   rebuttals: Rebuttal[]; confidence: number; adjustedRiskLevel: RiskLevel;
-  verdict: "confirmed" | "review" | "dismissed";
+  verdict: "confirmed" | "review" | "dismissed"; usedMock?: boolean;
 }
 export interface TraceStep { step: number; tool: string; input: unknown; output: unknown; }
 export interface InvestigateResult {
   trace: TraceStep[]; evidence: Record<string, unknown>;
-  explanation: string; suggestedDisposition: WorkOrderType;
+  explanation: string; suggestedDisposition: WorkOrderType; usedMock?: boolean;
 }
 export interface WorkOrder {
   id: string; anomalyId: string; type: WorkOrderType; status: WorkOrderStatus;

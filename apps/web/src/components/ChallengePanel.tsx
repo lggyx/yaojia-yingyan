@@ -9,6 +9,19 @@ export function ChallengePanel({ result }: { result: ChallengeResult | null }) {
 
   return (
     <section className="grid gap-3">
+      <div className="flex items-center gap-2">
+        {result.usedMock === false ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#d1f0e1] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1a5c3a]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#1a5c3a]" />
+            AI 实时推理
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[#92400e]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#92400e]" />
+            模拟数据
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-3 gap-2 text-center text-sm">
         <Metric label="置信度" value={`${result.confidence}%`} tone={result.verdict === "dismissed" ? "muted" : "risk"} />
         <Metric label="判定" value={verdictText[result.verdict]} tone={result.verdict === "dismissed" ? "muted" : "risk"} />
